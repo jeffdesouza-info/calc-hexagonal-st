@@ -14,5 +14,29 @@
     "result": 5,
     "formatted_expression": "10 / 2 = 5",
     "timestamp": "2026-10-28T02:46:47.379361"
+  },
+  {
+    "operand_a": 10,
+    "operand_b": 1,
+    "operation": "+",
+    "result": 11,
+    "formatted_expression": "10 + 1 = 11",
+    "timestamp": "2026-10-28T03:32:29.736496"
+  },
+  {
+    "operand_a": 10,
+    "operand_b": 1,
+    "operation": "+",
+    "result": 11,
+    "formatted_expression": "10 + 1 = 11",
+    "timestamp": "2026-10-28T03:32:42.135376"
+  },
+  {
+    "operand_a": 10,
+    "operand_b": 1,
+    "operation": "+",
+    "result": 11,
+    "formatted_expression": "10 + 1 = 11",
+    "timestamp": "2026-10-28T03:34:21.304933"
   }
 ]

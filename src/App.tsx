@@ -254,6 +254,56 @@ export default function App() {
     setErrorCode(null);
   };
 
+  const executeCalculationWith = async (a: number, b: number, op: '+' | '-' | '*' | '/') => {
+    setIsCalculating(true);
+    setErrorMessage(null);
+    setErrorCode(null);
+
+    try {
+      const response = await fetch('/api/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operand_a: a,
+          operand_b: b,
+          operation: op,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        // DECISÃO DE UX/UI: Exibir o resultado calculado DIRETAMENTE no display principal com grande destaque!
+        setCalculatedValue(data.data.result);
+        setIsShowingCalculatedResult(true);
+        setLastCompletedExpression(`${a} ${op} ${b} =`);
+        
+        // Prepara operandA para permitir encadeamento automático do próximo cálculo
+        setOperandA(String(data.data.result));
+        setOperandB('');
+        setOperation(null);
+        setActiveInput('A');
+
+        fetchHistory();
+      } else {
+        setIsShowingCalculatedResult(false);
+        setCalculatedValue(null);
+        setOperandA(String(a));
+        setOperation(op);
+        setOperandB(String(b));
+        setLastCompletedExpression(`${a} ${op} ${b}`);
+        setErrorMessage(data.error || 'Erro ao realizar o cálculo no motor Python.');
+        setErrorCode(data.code || 'ERROR');
+      }
+    } catch (e: any) {
+      setIsShowingCalculatedResult(false);
+      setCalculatedValue(null);
+      setErrorMessage(`Falha na requisição: ${e.message}`);
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
   const handleExecuteCalculation = async () => {
     if (!operandA) {
       setErrorMessage('Por favor, informe o primeiro número inteiro.');
@@ -268,59 +318,16 @@ export default function App() {
       return;
     }
 
-    setIsCalculating(true);
-    setErrorMessage(null);
-    setErrorCode(null);
-
-    try {
-      const response = await fetch('/api/calculate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          operand_a: parseInt(operandA, 10),
-          operand_b: parseInt(operandB, 10),
-          operation: operation,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.data) {
-        // DECISÃO DE UX/UI: Exibir o resultado calculado DIRETAMENTE no display principal com grande destaque!
-        setCalculatedValue(data.data.result);
-        setIsShowingCalculatedResult(true);
-        setLastCompletedExpression(`${operandA} ${operation} ${operandB} =`);
-        
-        // Prepara operandA para permitir encadeamento automático do próximo cálculo
-        setOperandA(String(data.data.result));
-        setOperandB('');
-        setOperation(null);
-        setActiveInput('A');
-
-        fetchHistory();
-      } else {
-        setIsShowingCalculatedResult(false);
-        setErrorMessage(data.error || 'Erro ao realizar o cálculo no motor Python.');
-        setErrorCode(data.code || 'ERROR');
-      }
-    } catch (e: any) {
-      setIsShowingCalculatedResult(false);
-      setErrorMessage(`Falha na requisição: ${e.message}`);
-    } finally {
-      setIsCalculating(false);
-    }
+    await executeCalculationWith(parseInt(operandA, 10), parseInt(operandB, 10), operation);
   };
 
   const handleApplyPreset = (a: number, op: '+' | '-' | '*' | '/', b: number) => {
+    // Padronização solicitada: Cenários Rápidos calculam DIRETAMENTE e exibem o resultado no display principal
     setOperandA(String(a));
     setOperation(op);
     setOperandB(String(b));
-    setActiveInput('B');
-    setIsShowingCalculatedResult(false);
-    setLastCompletedExpression(null);
-    setCalculatedValue(null);
-    setErrorMessage(null);
-    setErrorCode(null);
+    setActiveInput('A');
+    executeCalculationWith(a, b, op);
   };
 
   const copyToClipboard = (text: string, type: 'file' | string) => {
@@ -336,6 +343,9 @@ export default function App() {
 
   // Valor a ser exibido no display principal
   const getPrimaryDisplayValue = () => {
+    if (errorMessage && errorCode === 'DIVISION_BY_ZERO') {
+      return 'Erro';
+    }
     if (isShowingCalculatedResult && calculatedValue !== null) {
       return calculatedValue;
     }
@@ -520,6 +530,10 @@ export default function App() {
                       <span className="text-slate-600 font-medium">
                         {lastCompletedExpression}
                       </span>
+                    ) : errorMessage && lastCompletedExpression ? (
+                      <span className="text-rose-600 font-medium">
+                        {lastCompletedExpression}
+                      </span>
                     ) : (
                       <>
                         {operandA !== '' && (
@@ -546,7 +560,9 @@ export default function App() {
                   <div className="mt-2 text-right">
                     <div
                       className={`text-4xl sm:text-5xl font-mono font-bold tracking-tight overflow-x-auto scrollbar-none transition-all ${
-                        isShowingCalculatedResult
+                        errorMessage
+                          ? 'text-rose-600'
+                          : isShowingCalculatedResult
                           ? 'text-blue-700 drop-shadow-xs'
                           : 'text-slate-900'
                       }`}
@@ -562,6 +578,11 @@ export default function App() {
                         <span className="text-blue-600 font-medium flex items-center gap-1">
                           <Cpu className="w-3.5 h-3.5 animate-spin" />
                           Processando via Python Core...
+                        </span>
+                      ) : errorMessage ? (
+                        <span className="text-rose-600 font-semibold flex items-center gap-1">
+                          <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                          {errorCode === 'DIVISION_BY_ZERO' ? 'Divisão por Zero Bloqueada' : 'Erro de Validação'}
                         </span>
                       ) : isShowingCalculatedResult ? (
                         <span className="text-emerald-700 font-semibold flex items-center gap-1">
@@ -830,14 +851,9 @@ export default function App() {
                           </div>
                         </div>
                         <button
-                          onClick={() => {
-                            setOperandA(String(item.operand_a));
-                            setOperation(item.operation as any);
-                            setOperandB(String(item.operand_b));
-                            setActiveInput('B');
-                            setIsShowingCalculatedResult(false);
-                          }}
+                          onClick={() => handleApplyPreset(item.operand_a, item.operation as any, item.operand_b)}
                           className="opacity-0 group-hover:opacity-100 px-2.5 py-1 text-xs font-medium rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-all shadow-xs"
+                          title="Recalcular e exibir resultado no display principal"
                         >
                           Reutilizar
                         </button>

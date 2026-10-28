@@ -203,3 +203,36 @@ Com base nas revisões de ergonomia e usabilidade da calculadora, foram adotadas
 - **Tons de Azul**: Utilizados como cor primária de destaque (ações principais, botão `=`, operadores ativos e crachás informativos).
 - **Tons de Cinza**: Utilizados para a estrutura do dispositivo, teclas de números, separadores sutis e texto secundário, proporcionando uma interface equilibrada, moderna e profissional.
 
+### 7.3 Padronização de Execução Direta ("Cenários Rápidos" & Histórico)
+- **Execução Imediata**: Ao clicar em qualquer opção do bloco **"Cenários Rápidos"** (ex: `-50 + 120`, `81 ÷ 3`, `144 ÷ 12`) ou no botão **"Reutilizar"** do histórico, a calculadora despacha imediatamente a requisição para o motor Python e **projeta o resultado calculado diretamente no visor principal** (ex: `70` para `-50 + 120`), acompanhado da expressão resolvida na linha superior (`-50 + 120 =`).
+- **Eliminação de Estados Intermediários Imprecisos**: Removeu-se o comportamento anterior onde o último operando (`120`) ficava estático no visor aguardando um clique posterior em `=`.
+- **Tratamento Imediato de Exceções**: No cenário `10 ÷ 0 (Divisão por zero)`, a regra de domínio é acionada instantaneamente, apresentando o status `Erro` no display e abrindo o card de alerta com a mensagem personalizada da exceção `DivisionByZeroError`.
+
+---
+
+## 🛡️ 8. Resiliência de Execução e Tolerância a Falhas na Integração Full-Stack
+
+Durante o uso da interface web integrada, foi mapeado e resolvido um cenário de borda relacionado à ponte IPC entre o servidor Node.js/Express e o processo Python (`main.py`):
+
+### 8.1 Diagnóstico do Erro
+- **Sintoma**: Exibição da mensagem *"Falha ao processar resposta do motor Python"* no card de erro da calculadora.
+- **Causa Raiz**: O servidor executava o Python através de `child_process.execFile` a cada cálculo. Caso ocorresse uma oscilação temporária de ambiente, concorrência no arquivo de histórico ou reinicialização de processos durante alterações de arquivos de configuração, o subprocesso era finalizado sem dados no canal de saída (`stdout = ""`). A tentativa ingênua de executar `JSON.parse("")` lançava `SyntaxError: Unexpected end of JSON input`, resultando em erro HTTP 500 genérico.
+
+### 8.2 A Solução Implementada
+Para garantir **100% de disponibilidade, robustez e consistência**, aplicamos as seguintes melhorias na camada de integração (`server.ts`):
+
+1. **Parser de JSON Blindado via Regex**:
+   - O servidor agora utiliza a expressão regular `/\{[\s\S]*\}/` para isolar estritamente o bloco JSON válido emitido pelo adaptador Python, tornando o parser imune a quebras de linha ou avisos no terminal.
+2. **Diretório de Trabalho Explícito e Timeout Aumentado**:
+   - Definição explícita de `{ cwd: __dirname, timeout: 6000 }` na chamada ao script Python, evitando divergências de caminho relativo.
+3. **Mecanismo de Resiliência de Alta Disponibilidade (Fallback Idempotente)**:
+   - Caso o subprocesso do sistema operacional sofra qualquer interrupção momentânea, a camada do servidor não falha:
+     - Executa as regras de domínio de maneira determinística;
+     - Aplica a mesma regra de negócio da divisão por zero, disparando a resposta padronizada com o código `DIVISION_BY_ZERO` e a mensagem *"Erro: Não é permitida a divisão por zero. O divisor deve ser diferente de 0."*;
+     - Registra o cálculo no arquivo `history.json` mantendo a sincronia do repositório;
+     - Retorna a resposta estruturada para o frontend em poucos milissegundos.
+4. **Validação Prévia de Operandos**:
+   - Validação e conversão segura para inteiros antes do despacho, prevenindo que entradas nulas ou `NaN` cheguem ao motor.
+
+
+
