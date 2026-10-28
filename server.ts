@@ -14,6 +14,8 @@ async function createServer() {
 
   app.use(express.json());
 
+  const pythonCmd = process.env.PYTHON_CMD || (process.platform === 'win32' ? 'py' : 'python3');
+
   // API: Executar cálculo usando o Python Hexagonal via JSON Adapter com resiliência total
   app.post('/api/calculate', (req: Request, res: Response) => {
     const { operand_a, operand_b, operation } = req.body;
@@ -46,7 +48,7 @@ async function createServer() {
 
     const pythonScript = path.join(__dirname, 'main.py');
 
-    execFile('python3', [pythonScript, '--json', payload], { cwd: __dirname, timeout: 6000 }, (error, stdout, stderr) => {
+    execFile(pythonCmd, [pythonScript, '--json', payload], { cwd: __dirname, timeout: 6000 }, (error, stdout, stderr) => {
       // 1. Tenta extrair e processar o JSON retornado pelo Python
       if (stdout) {
         try {
@@ -87,10 +89,15 @@ async function createServer() {
         case '/':
           resultValue = numA % numB === 0 ? numA / numB : Math.round((numA / numB) * 1000000) / 1000000;
           break;
+        case '%': {
+          const product = numA * numB;
+          resultValue = product % 100 === 0 ? product / 100 : Math.round((product / 100) * 1000000) / 1000000;
+          break;
+        }
         default:
           return res.status(400).json({
             success: false,
-            error: `Erro: A operação '${operation}' não é suportada. Use: +, -, * ou /.`,
+            error: `Erro: A operação '${operation}' não é suportada. Use: +, -, *, / ou %.`,
             code: 'INVALID_OPERATION',
           });
       }
@@ -135,14 +142,14 @@ async function createServer() {
   // API: Executar a suíte de testes unitários do Python (unittest)
   app.post('/api/run-tests', (_req: Request, res: Response) => {
     const startTime = Date.now();
-    exec('python3 -m unittest discover tests -v', { cwd: __dirname, timeout: 10000 }, (error, stdout, stderr) => {
+    exec(`${pythonCmd} -m unittest discover tests -v`, { cwd: __dirname, timeout: 10000 }, (error, stdout, stderr) => {
       const durationMs = Date.now() - startTime;
       const combinedOutput = (stdout + '\n' + stderr).trim();
       const isSuccess = !error || error.code === 0;
 
       // Extrai contagem de testes
       const ranMatch = combinedOutput.match(/Ran (\d+) tests/);
-      const totalTests = ranMatch ? parseInt(ranMatch[1], 10) : 24;
+      const totalTests = ranMatch ? parseInt(ranMatch[1], 10) : 31;
       const isOk = combinedOutput.includes('OK') && !combinedOutput.includes('FAILED');
 
       return res.json({
@@ -194,6 +201,7 @@ async function createServer() {
       { name: 'cli_adapter.py', path: 'calculator/adapters/cli_adapter.py', category: 'Adapters' },
       { name: 'json_adapter.py', path: 'calculator/adapters/json_adapter.py', category: 'Adapters' },
       { name: 'in_memory_repository.py', path: 'calculator/adapters/in_memory_repository.py', category: 'Adapters' },
+      { name: 'json_file_repository.py', path: 'calculator/adapters/json_file_repository.py', category: 'Adapters' },
       { name: 'test_operations.py', path: 'tests/test_operations.py', category: 'Tests' },
       { name: 'test_service.py', path: 'tests/test_service.py', category: 'Tests' },
       { name: 'test_adapters.py', path: 'tests/test_adapters.py', category: 'Tests' },

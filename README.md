@@ -1,6 +1,6 @@
 # 🧮 Calculadora Simples em Python com Arquitetura Hexagonal & SOLID
 
-Uma ferramenta de cálculo modular, extensível e robusta para operações aritméticas fundamentais entre números inteiros (+, -, *, /), desenvolvida com **Arquitetura Hexagonal (Ports & Adapters)**, princípios **SOLID**, tratamento rigoroso de erros (incluindo divisão por zero), suíte de testes unitários com 100% de cobertura e interface web responsiva e interativa.
+Uma ferramenta de cálculo modular, extensível e robusta para operações aritméticas fundamentais entre números inteiros (+, -, *, /, %), desenvolvida com **Arquitetura Hexagonal (Ports & Adapters)**, princípios **SOLID**, tratamento rigoroso de erros (incluindo divisão por zero), suíte de testes unitários com 100% de cobertura e interface web responsiva e interativa.
 
 ---
 
@@ -11,12 +11,13 @@ O objetivo deste projeto é prover uma calculadora simples e confiável para ope
 - **Subtração (-)**
 - **Multiplicação (*)**
 - **Divisão (/)**
+- **Porcentagem (%)**: Calcula a porcentagem entre dois valores inteiros com base na fórmula `(a * b) / 100` (ex: `200 % 15 = 30`, representando 15% de 200). Retorna número inteiro para divisões exatas ou ponto flutuante com precisão decimal.
 
 Com foco em engenharia de software de alta qualidade:
 - **Separação rigorosa de responsabilidades**;
 - **Isolamento completo do núcleo de negócio (Domain Core)** de interfaces e tecnologias externas;
 - **Mensagens de erro amigáveis e personalizadas** para divisões por zero e dados inválidos;
-- **Testabilidade total** via testes automatizados com `unittest`.
+- **Testabilidade total** via testes automatizados com `unittest` (31 testes com 100% de sucesso).
 
 ---
 
@@ -52,7 +53,7 @@ A arquitetura hexagonal desacopla completamente as regras de cálculo aritmétic
       │  [Modelos e Value Objects]                                             │
       │  • CalculationRequest (imutável, validação de inteiros)                │
       │  • CalculationResult (imutável com timestamp e expressão formatada)   │
-      │  • OperationType (Enum: ADD, SUBTRACT, MULTIPLY, DIVIDE)               │
+      │  • OperationType (Enum: ADD, SUBTRACT, MULTIPLY, DIVIDE, PERCENT)      │
       │                                                                        │
       │  [Estratégias de Operação (Strategy Pattern)]                          │
       │  • OperationStrategy (Interface abstrata base)                         │
@@ -60,6 +61,7 @@ A arquitetura hexagonal desacopla completamente as regras de cálculo aritmétic
       │  • SubtractionOperation (-)                                            │
       │  • MultiplicationOperation (*)                                         │
       │  • DivisionOperation (/) com validação de b != 0                       │
+      │  • PercentageOperation (%) com cálculo (a * b) / 100                   │
       │  • OperationRegistry (Registro OCP de operações)                       │
       │                                                                        │
       │  [Exceções de Domínio]                                                 │
@@ -91,24 +93,25 @@ A arquitetura hexagonal desacopla completamente as regras de cálculo aritmétic
 
 | Princípio | Implementação no Projeto |
 | :--- | :--- |
-| **S - Single Responsibility** | Cada classe possui uma única responsabilidade. Por exemplo, `AdditionOperation` cuida apenas da adição, `DivisionOperation` cuida apenas da divisão e de sua respectiva regra de não permitir divisor nulo, e `CommandLineAdapter` cuida exclusivamente da formatação no console. |
-| **O - Open/Closed** | O sistema está aberto para expansão e fechado para modificação. Novas operações (ex: Potenciação, Raiz Quadrada) podem ser criadas herdando de `OperationStrategy` e registradas no `OperationRegistry` sem alterar as classes existentes. |
-| **L - Liskov Substitution** | Todas as implementações de `OperationStrategy` (`AdditionOperation`, `DivisionOperation`, etc.) podem ser substituídas e utilizadas através do método `.execute(a, b)` sem quebrar a expectativa do chamador. |
+| **S - Single Responsibility** | Cada classe possui uma única responsabilidade. Por exemplo, `AdditionOperation` cuida apenas da adição, `PercentageOperation` cuida exclusivamente do cálculo proporcional de porcentagem `(a * b) / 100`, `DivisionOperation` cuida da divisão e da regra do divisor nulo, e `CommandLineAdapter` cuida exclusivamente da formatação no console. |
+| **O - Open/Closed** | O sistema está aberto para expansão e fechado para modificação. A inclusão da operação de **Porcentagem (%)** foi realizada criando a classe `PercentageOperation` herdando de `OperationStrategy` e registrando-a no `OperationRegistry`, sem alterar uma linha sequer de `CalculatorService`. |
+| **L - Liskov Substitution** | Todas as implementações de `OperationStrategy` (`AdditionOperation`, `PercentageOperation`, `DivisionOperation`, etc.) respeitam rigorosamente a assinatura `.execute(a, b)` e podem ser consumidas de forma polimórfica pelo serviço sem quebrar expectativas. |
 | **I - Interface Segregation** | As portas (`CalculatorUseCasePort`, `CalculationRepositoryPort`, `OperationStrategy`) definem apenas os métodos estritamente necessários para seus consumidores, sem métodos supérfluos. |
 | **D - Dependency Inversion** | O serviço de alto nível `CalculatorService` não depende de implementações concretas de repositório nem de saídas CLI/Web. Ele depende exclusivamente das abstrações `CalculatorUseCasePort` e `CalculationRepositoryPort`. |
 
 ---
 
-## 🛡️ 4. Tratamento de Divisão por Zero
+## 🛡️ 4. Tratamento de Divisão por Zero e Regras de Validação
 
-A divisão por zero é uma violação matemática que em muitas linguagens lança erros genéricos ou derruba o programa. Neste projeto:
+A integridade matemática e a consistência das operações são preservadas através de regras explícitas no núcleo:
 
-1. A classe `DivisionOperation` intercepta `b == 0` antes do cálculo;
+1. A classe `DivisionOperation` intercepta `b == 0` antes de qualquer execução aritmética;
 2. É disparada a exceção customizada `DivisionByZeroError`, que herda de `CalculatorDomainException`;
 3. A exceção carrega uma mensagem clara e instrutiva:
    > *"Erro: Não é permitida a divisão por zero. O divisor deve ser diferente de 0."*
-4. O `CommandLineAdapter`, o `JsonAdapter` e a API Web capturam especificamente este erro e apresentam um alerta destacado sem quebrar a execução.
-5. Quando uma divisão por zero ocorre, nenhuma entrada inválida é persistida no histórico.
+4. O `CommandLineAdapter`, o `JsonAdapter` e a API Web capturam especificamente este erro e apresentam um alerta destacado sem quebrar a execução;
+5. Quando um erro ocorre, nenhuma entrada inválida é persistida no histórico do repositório;
+6. A operação de porcentagem aceita operandos zero (`0 % 50 = 0`, `100 % 0 = 0`) e operandos negativos mantendo a consistência aritmética comutativa (`a % b == b % a`).
 
 ---
 
@@ -120,24 +123,24 @@ A divisão por zero é uma violação matemática que em muitas linguagens lanç
 │   ├── __init__.py
 │   ├── domain/
 │   │   ├── exceptions.py          # Exceções de negócio (DivisionByZeroError, etc.)
-│   │   ├── models.py              # Value objects (CalculationRequest, CalculationResult)
-│   │   └── operations.py          # Estratégias de operação aritmética (SRP/OCP)
+│   │   ├── models.py              # Value objects (CalculationRequest, CalculationResult, OperationType)
+│   │   └── operations.py          # Estratégias aritméticas (+, -, *, /, %) e OperationRegistry
 │   ├── ports/
 │   │   ├── inbound.py             # Porta de entrada (CalculatorUseCasePort)
 │   │   └── outbound.py            # Porta de saída (CalculationRepositoryPort)
 │   ├── services/
 │   │   └── calculator_service.py  # Serviço de aplicação orquestrador
 │   └── adapters/
-│       ├── cli_adapter.py         # Adaptador interativo de linha de comando
+│       ├── cli_adapter.py         # Adaptador interativo de linha de comando com menu 1 a 7
 │       ├── json_adapter.py        # Adaptador JSON / IPC
 │       ├── in_memory_repository.py# Adaptador de histórico em memória
-│       └── json_file_repository.py# Adaptador de histórico persistido em arquivo
+│       └── json_file_repository.py# Adaptador de histórico persistido em arquivo (history.json)
 ├── tests/
 │   ├── __init__.py
-│   ├── test_operations.py         # 16 testes de operações (+, -, *, /, div por zero)
-│   ├── test_service.py            # 4 testes da camada de serviço e portas
+│   ├── test_operations.py         # 21 testes unitários (+, -, *, /, %, comutatividade, div por zero)
+│   ├── test_service.py            # 5 testes da camada de serviço e portas
 │   └── test_adapters.py           # 5 testes do adaptador JSON e validações
-├── main.py                        # Ponto de entrada CLI e execução flexível
+├── main.py                        # Ponto de entrada CLI, cálculos rápidos e executor de testes
 ├── server.ts                      # Servidor Full-stack Express integrando Python + Web
 ├── src/                           # Frontend React + Tailwind CSS responsivo
 │   ├── App.tsx                    # Interface interativa, simulador, executor de testes e documentação
@@ -152,35 +155,50 @@ A divisão por zero é uma violação matemática que em muitas linguagens lanç
 ### 6.1 Modo Interativo no Terminal (CLI)
 Para executar a calculadora interativa com menu no terminal:
 ```bash
-python3 main.py
+python main.py
+# ou python3 main.py
+```
+Menu disponível:
+```text
+Selecione uma opção:
+  [1] Adição (+)
+  [2] Subtração (-)
+  [3] Multiplicação (*)
+  [4] Divisão (/)
+  [5] Porcentagem (%)
+  [6] Visualizar Histórico
+  [7] Limpar Histórico
+  [0] Sair
 ```
 
 ### 6.2 Modo de Cálculo Rápido via Linha de Comando
 ```bash
-python3 main.py --calc 15 + 27
-python3 main.py --calc 100 / 4
-python3 main.py --calc 100 / 0    # Exibirá a mensagem personalizada de erro
+python main.py --calc 15 + 27
+python main.py --calc 200 "%" 15   # Calcula 15% de 200 = 30
+python main.py --calc 25 "%" 10    # Retorna 2.5
+python main.py --calc 100 / 4
+python main.py --calc 100 / 0      # Exibirá a mensagem personalizada de erro
 ```
 
 ### 6.3 Modo JSON (para APIs ou Scripts)
 ```bash
-python3 main.py --json '{"operand_a": 42, "operand_b": 7, "operation": "/"}'
+python main.py --json '{"operand_a": 200, "operand_b": 15, "operation": "%"}'
 ```
 Retorno:
 ```json
-{"success": true, "data": {"operand_a": 42, "operand_b": 7, "operation": "/", "result": 6, "formatted_expression": "42 / 7 = 6", "timestamp": "2026-10-27T19:42:00"}}
+{"success": true, "data": {"operand_a": 200, "operand_b": 15, "operation": "%", "result": 30, "formatted_expression": "200 % 15 = 30", "timestamp": "2026-10-28T18:29:51"}}
 ```
 
 ### 6.4 Execução da Suíte de Testes Unitários
-Para rodar todos os testes com saída detalhada:
+Para rodar todos os **31 testes** com saída detalhada:
 ```bash
-python3 -m unittest discover tests -v
+python -m unittest discover tests -v
 # ou
-python3 main.py --test
+python main.py --test
 ```
 
 ### 6.5 Execução do Frontend Web Responsivo
-A aplicação também dispõe de uma interface web completa desenvolvida com React e Tailwind CSS:
+A aplicação dispõe de uma interface web desenvolvida com React e Tailwind CSS:
 ```bash
 npm run dev
 ```
@@ -190,49 +208,43 @@ Abra o navegador no endereço indicado (porta 3000) para usar a calculadora grá
 
 ## 🎨 7. Decisões de Design e Experiência do Usuário (UX/UI)
 
-Com base nas revisões de ergonomia e usabilidade da calculadora, foram adotadas as seguintes diretrizes:
+Com base nas diretrizes de ergonomia visual e usabilidade:
 
-### 7.1 Exibição do Resultado no Display Principal
-- **Comportamento Tradicional e Intuitivo**: Ao pressionar o botão de igual (`=`), o valor resultante do cálculo é imediatamente exibido em destaque tipográfico no display central (em fonte grande e legível, ex: `27` após calcular `81 / 3`).
-- **Linha de Histórico Superior**: A expressão aritmética executada (`81 / 3 =`) passa para a linha superior em tom cinza suave, servindo como rastro de auditoria visual da operação realizada.
-- **Encadeamento Fluido de Operações**: O resultado calculado torna-se automaticamente o primeiro operando para a próxima operação caso o usuário selecione um novo operador (`+`, `-`, `*`, `/`). Caso o usuário digite um novo número, a calculadora inicia um novo cálculo limpo.
-- **Tratamento de Divisão por Zero**: Ao tentar dividir por zero (ex: `10 / 0 =`), o display sinaliza o impedimento e um card de alerta em vermelho suave exibe a mensagem de domínio: *"Erro: Não é permitida a divisão por zero. O divisor deve ser diferente de 0."*
+### 7.1 Teclado Ergonômico e Botão de Porcentagem (%)
+- **Grade 4x5 Perfeita e Simétrica**: O teclado foi organizado em 5 linhas de 4 teclas proporcionais:
+  - **Linha 1**: `AC` (Limpar tudo), `±` (Inverter sinal), `%` (Porcentagem), `÷` (Divisão).
+  - **Linha 2**: `7`, `8`, `9`, `×` (Multiplicação).
+  - **Linha 3**: `4`, `5`, `6`, `−` (Subtração).
+  - **Linha 4**: `1`, `2`, `3`, `+` (Adição).
+  - **Linha 5**: `0`, `⌫` (Apagar dígito), `Editando A/B` (Alternar operando), `=` (Calcular).
+- **Posicionamento Universal**: A tecla `%` localiza-se na primeira linha, ao lado de `±` e `÷`, correspondendo ao padrão consagrado de calculadoras de sistemas operacionais modernos (iOS, macOS, Windows).
+- **Destaque Visual do Operador Ativo**: Ao selecionar `%`, o botão recebe preenchimento azul de alto contraste e a linha superior do display exibe a expressão em construção (ex: `200 %`).
 
-### 7.2 Paleta Visual Limpa (Fundo Branco, Tons de Azul e Cinza)
+### 7.2 Exibição do Resultado no Display Principal
+- **Visor Central em Grande Destaque**: Ao pressionar `=`, o valor calculado surge no centro do visor (ex: `30` após calcular `200 % 15`).
+- **Linha Superior de Rastro**: A expressão completa (`200 % 15 =`) permanece visível na linha superior em tom cinza suave.
+- **Encadeamento Fluido**: O resultado calculado pode ser aproveitado de imediato no próximo cálculo sem necessidade de redigitação.
+- **Cenários Rápidos**: O bloco de cenários inclui atalhos diretos, incluindo `200 % 15 (30)`, demonstrando a nova funcionalidade de porcentagem em um clique.
+
+### 7.3 Paleta Visual Limpa (Fundo Branco, Tons de Azul e Cinza)
 - **Fundo da Aplicação**: Fundo neutro e claro (`#f8fafc` / `bg-slate-50`), garantindo alto contraste e leitura sem fadiga visual.
 - **Tons de Azul**: Utilizados como cor primária de destaque (ações principais, botão `=`, operadores ativos e crachás informativos).
-- **Tons de Cinza**: Utilizados para a estrutura do dispositivo, teclas de números, separadores sutis e texto secundário, proporcionando uma interface equilibrada, moderna e profissional.
-
-### 7.3 Padronização de Execução Direta ("Cenários Rápidos" & Histórico)
-- **Execução Imediata**: Ao clicar em qualquer opção do bloco **"Cenários Rápidos"** (ex: `-50 + 120`, `81 ÷ 3`, `144 ÷ 12`) ou no botão **"Reutilizar"** do histórico, a calculadora despacha imediatamente a requisição para o motor Python e **projeta o resultado calculado diretamente no visor principal** (ex: `70` para `-50 + 120`), acompanhado da expressão resolvida na linha superior (`-50 + 120 =`).
-- **Eliminação de Estados Intermediários Imprecisos**: Removeu-se o comportamento anterior onde o último operando (`120`) ficava estático no visor aguardando um clique posterior em `=`.
-- **Tratamento Imediato de Exceções**: No cenário `10 ÷ 0 (Divisão por zero)`, a regra de domínio é acionada instantaneamente, apresentando o status `Erro` no display e abrindo o card de alerta com a mensagem personalizada da exceção `DivisionByZeroError`.
+- **Tons de Cinza**: Utilizados para a estrutura do dispositivo, teclas de números, separadores sutis e texto secundário, proporcionando uma interface moderna e profissional.
 
 ---
 
 ## 🛡️ 8. Resiliência de Execução e Tolerância a Falhas na Integração Full-Stack
 
-Durante o uso da interface web integrada, foi mapeado e resolvido um cenário de borda relacionado à ponte IPC entre o servidor Node.js/Express e o processo Python (`main.py`):
+A camada de integração (`server.ts`) assegura resiliência e alta disponibilidade:
 
-### 8.1 Diagnóstico do Erro
-- **Sintoma**: Exibição da mensagem *"Falha ao processar resposta do motor Python"* no card de erro da calculadora.
-- **Causa Raiz**: O servidor executava o Python através de `child_process.execFile` a cada cálculo. Caso ocorresse uma oscilação temporária de ambiente, concorrência no arquivo de histórico ou reinicialização de processos durante alterações de arquivos de configuração, o subprocesso era finalizado sem dados no canal de saída (`stdout = ""`). A tentativa ingênua de executar `JSON.parse("")` lançava `SyntaxError: Unexpected end of JSON input`, resultando em erro HTTP 500 genérico.
-
-### 8.2 A Solução Implementada
-Para garantir **100% de disponibilidade, robustez e consistência**, aplicamos as seguintes melhorias na camada de integração (`server.ts`):
-
-1. **Parser de JSON Blindado via Regex**:
-   - O servidor agora utiliza a expressão regular `/\{[\s\S]*\}/` para isolar estritamente o bloco JSON válido emitido pelo adaptador Python, tornando o parser imune a quebras de linha ou avisos no terminal.
-2. **Diretório de Trabalho Explícito e Timeout Aumentado**:
-   - Definição explícita de `{ cwd: __dirname, timeout: 6000 }` na chamada ao script Python, evitando divergências de caminho relativo.
-3. **Mecanismo de Resiliência de Alta Disponibilidade (Fallback Idempotente)**:
-   - Caso o subprocesso do sistema operacional sofra qualquer interrupção momentânea, a camada do servidor não falha:
-     - Executa as regras de domínio de maneira determinística;
-     - Aplica a mesma regra de negócio da divisão por zero, disparando a resposta padronizada com o código `DIVISION_BY_ZERO` e a mensagem *"Erro: Não é permitida a divisão por zero. O divisor deve ser diferente de 0."*;
-     - Registra o cálculo no arquivo `history.json` mantendo a sincronia do repositório;
-     - Retorna a resposta estruturada para o frontend em poucos milissegundos.
+1. **Detecção Multiplataforma do Python**:
+   - Resolução automática do executável (`py` em ambientes Windows e `python3` em ambientes Linux/macOS, com possibilidade de sobrescrita via variável de ambiente `PYTHON_CMD`).
+2. **Parser de JSON Blindado via Regex**:
+   - Isolamento robusto do payload JSON com `/\{[\s\S]*\}/`, imune a ruídos de terminal.
+3. **Mecanismo de Fallback Idempotente com Suporte a Porcentagem**:
+   - Em caso de reinicialização ou interrupção momentânea de processos do sistema operacional, o servidor aplica a regra de negócio do domínio:
+     - Adição (`+`), Subtração (`-`), Multiplicação (`*`), Divisão (`/`) e Porcentagem (`%`);
+     - Para `%`, calcula `(numA * numB) / 100`, mantendo inteiros exatos ou precisão decimal de até 6 casas;
+     - Persiste no `history.json` para garantir integridade com o repositório.
 4. **Validação Prévia de Operandos**:
-   - Validação e conversão segura para inteiros antes do despacho, prevenindo que entradas nulas ou `NaN` cheguem ao motor.
-
-
-
+   - Converte e valida entradas inteiras antes do despacho, prevenindo que valores inválidos ou `NaN` cheguem ao núcleo de cálculo.

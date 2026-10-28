@@ -29,6 +29,6 @@ class InvalidOperationError(CalculatorDomainException):
     """Exceção lançada quando uma operação aritmética não é reconhecida ou suportada."""
 
     def __init__(self, operation: str):
-        message = f"Erro: A operação '{operation}' não é suportada. Use: +, -, * ou /."
+        message = f"Erro: A operação '{operation}' não é suportada. Use: +, -, *, / ou %."
         super().__init__(message)
         self.message = message

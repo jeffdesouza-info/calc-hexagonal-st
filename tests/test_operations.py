@@ -1,6 +1,6 @@
 """Testes Unitários para as Estratégias de Operações Aritméticas (SOLID - SRP/LSP).
 
-Valida cada operação de forma isolada, com foco especial no tratamento da divisão por zero.
+Valida cada operação de forma isolada, com foco especial no tratamento da divisão por zero e cálculo de porcentagem.
 """
 
 import unittest
@@ -12,18 +12,20 @@ from calculator.domain.operations import (
     DivisionOperation,
     MultiplicationOperation,
     OperationRegistry,
+    PercentageOperation,
     SubtractionOperation,
 )
 
 
 class TestArithmeticOperations(unittest.TestCase):
-    """Bateria de testes unitários para as quatro operações aritméticas básicas."""
+    """Bateria de testes unitários para as operações aritméticas fundamentais."""
 
     def setUp(self):
         self.add_op = AdditionOperation()
         self.sub_op = SubtractionOperation()
         self.mul_op = MultiplicationOperation()
         self.div_op = DivisionOperation()
+        self.pct_op = PercentageOperation()
 
     # --- Testes de Adição ---
     def test_addition_positive_numbers(self):
@@ -98,6 +100,37 @@ class TestArithmeticOperations(unittest.TestCase):
         """Valida que zero dividido por qualquer número diferente de zero resulta em zero."""
         self.assertEqual(self.div_op.execute(0, 5), 0)
 
+    # --- Testes de Porcentagem ---
+    def test_percentage_exact_integer(self):
+        """Valida porcentagem com resultado inteiro exato."""
+        self.assertEqual(self.pct_op.execute(200, 15), 30)
+        self.assertEqual(self.pct_op.execute(500, 10), 50)
+        self.assertEqual(self.pct_op.execute(100, 25), 25)
+        self.assertEqual(self.pct_op.execute(80, 50), 40)
+
+    def test_percentage_inexact_decimal(self):
+        """Valida porcentagem cujo resultado possui casas decimais."""
+        self.assertEqual(self.pct_op.execute(25, 10), 2.5)
+        self.assertEqual(self.pct_op.execute(50, 3), 1.5)
+        self.assertEqual(self.pct_op.execute(125, 33), 41.25)
+
+    def test_percentage_with_zero(self):
+        """Valida porcentagem quando um dos operandos é zero."""
+        self.assertEqual(self.pct_op.execute(0, 50), 0)
+        self.assertEqual(self.pct_op.execute(100, 0), 0)
+        self.assertEqual(self.pct_op.execute(0, 0), 0)
+
+    def test_percentage_with_negative_numbers(self):
+        """Valida cálculo de porcentagem envolvendo valores negativos."""
+        self.assertEqual(self.pct_op.execute(-200, 15), -30)
+        self.assertEqual(self.pct_op.execute(200, -15), -30)
+        self.assertEqual(self.pct_op.execute(-50, -10), 5)
+
+    def test_percentage_commutativity(self):
+        """Valida a comutatividade da operação de porcentagem: a % b == b % a."""
+        self.assertEqual(self.pct_op.execute(200, 15), self.pct_op.execute(15, 200))
+        self.assertEqual(self.pct_op.execute(80, 25), self.pct_op.execute(25, 80))
+
     # --- Teste de Registro OCP ---
     def test_operation_registry_retrieval(self):
         """Valida recuperação correta das estratégias no registro desacoplado."""
@@ -106,6 +139,7 @@ class TestArithmeticOperations(unittest.TestCase):
         self.assertIsInstance(registry.get(OperationType.SUBTRACT), SubtractionOperation)
         self.assertIsInstance(registry.get(OperationType.MULTIPLY), MultiplicationOperation)
         self.assertIsInstance(registry.get(OperationType.DIVIDE), DivisionOperation)
+        self.assertIsInstance(registry.get(OperationType.PERCENT), PercentageOperation)
 
 
 if __name__ == "__main__":

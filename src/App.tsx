@@ -21,8 +21,7 @@ import {
   ShieldCheck,
   Cpu,
   ArrowRight,
-  Sparkles,
-  ChevronRight
+  Sparkles
 } from 'lucide-react';
 
 interface CalculationResultData {
@@ -55,7 +54,7 @@ export default function App() {
   
   // Calculator state
   const [operandA, setOperandA] = useState<string>('');
-  const [operation, setOperation] = useState<'+' | '-' | '*' | '/' | null>(null);
+  const [operation, setOperation] = useState<'+' | '-' | '*' | '/' | '%' | null>(null);
   const [operandB, setOperandB] = useState<string>('');
   const [activeInput, setActiveInput] = useState<'A' | 'B'>('A');
   const [isCalculating, setIsCalculating] = useState<boolean>(false);
@@ -218,7 +217,7 @@ export default function App() {
     }
   };
 
-  const handleSelectOperation = (op: '+' | '-' | '*' | '/') => {
+  const handleSelectOperation = (op: '+' | '-' | '*' | '/' | '%') => {
     setErrorMessage(null);
     setErrorCode(null);
 
@@ -254,7 +253,7 @@ export default function App() {
     setErrorCode(null);
   };
 
-  const executeCalculationWith = async (a: number, b: number, op: '+' | '-' | '*' | '/') => {
+  const executeCalculationWith = async (a: number, b: number, op: '+' | '-' | '*' | '/' | '%') => {
     setIsCalculating(true);
     setErrorMessage(null);
     setErrorCode(null);
@@ -310,7 +309,7 @@ export default function App() {
       return;
     }
     if (!operation) {
-      setErrorMessage('Selecione uma operação aritmética (+, -, *, /).');
+      setErrorMessage('Selecione uma operação aritmética (+, -, *, / ou %).');
       return;
     }
     if (!operandB) {
@@ -321,8 +320,8 @@ export default function App() {
     await executeCalculationWith(parseInt(operandA, 10), parseInt(operandB, 10), operation);
   };
 
-  const handleApplyPreset = (a: number, op: '+' | '-' | '*' | '/', b: number) => {
-    // Padronização solicitada: Cenários Rápidos calculam DIRETAMENTE e exibem o resultado no display principal
+  const handleApplyPreset = (a: number, op: '+' | '-' | '*' | '/' | '%', b: number) => {
+    // Padronização: Cenários Rápidos calculam DIRETAMENTE e exibem o resultado no display principal
     setOperandA(String(a));
     setOperation(op);
     setOperandB(String(b));
@@ -378,7 +377,7 @@ export default function App() {
                 </span>
               </div>
               <p className="text-xs text-slate-500 hidden sm:block">
-                Operações aritméticas fundamentais com números inteiros • Arquitetura Hexagonal
+                Operações aritméticas fundamentais (+, −, ×, ÷, %) com números inteiros • Arquitetura Hexagonal
               </p>
             </div>
           </div>
@@ -478,6 +477,13 @@ export default function App() {
                     className="px-2.5 py-1 text-xs font-mono font-medium rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors"
                   >
                     81 ÷ 3
+                  </button>
+                  <button
+                    onClick={() => handleApplyPreset(200, '%', 15)}
+                    className="px-2.5 py-1 text-xs font-mono font-medium rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors font-semibold"
+                    title="15% de 200 = 30"
+                  >
+                    200 % 15 (30)
                   </button>
                   <button
                     onClick={() => handleApplyPreset(10, '/', 0)}
@@ -622,9 +628,9 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Keypad Grid - Paleta limpa em Branco, Azul e Cinza */}
+                {/* Keypad Grid - Paleta limpa em Branco, Azul e Cinza com 5 linhas de 4 teclas perfeitamente alinhadas */}
                 <div className="grid grid-cols-4 gap-2.5">
-                  {/* Row 1 */}
+                  {/* Row 1: AC, ±, %, ÷ */}
                   <button
                     onClick={handleResetCalculator}
                     className="p-3.5 rounded-xl font-mono font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 active:scale-95 transition-all text-sm flex items-center justify-center shadow-xs"
@@ -640,11 +646,15 @@ export default function App() {
                     ±
                   </button>
                   <button
-                    onClick={handleBackspace}
-                    className="p-3.5 rounded-xl font-mono font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 active:scale-95 transition-all text-sm flex items-center justify-center shadow-xs"
-                    title="Apagar dígito"
+                    onClick={() => handleSelectOperation('%')}
+                    className={`p-3.5 rounded-xl font-mono font-bold text-lg active:scale-95 transition-all flex items-center justify-center ${
+                      operation === '%'
+                        ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30'
+                        : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 shadow-xs'
+                    }`}
+                    title="Porcentagem (%)"
                   >
-                    <RotateCcw className="w-4 h-4" />
+                    %
                   </button>
                   <button
                     onClick={() => handleSelectOperation('/')}
@@ -653,11 +663,12 @@ export default function App() {
                         ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30'
                         : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 shadow-xs'
                     }`}
+                    title="Divisão (÷)"
                   >
                     ÷
                   </button>
 
-                  {/* Row 2 */}
+                  {/* Row 2: 7, 8, 9, × */}
                   <button
                     onClick={() => handleDigit('7')}
                     className="p-3.5 rounded-xl font-mono font-semibold text-xl text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 shadow-xs active:scale-95 transition-all"
@@ -683,11 +694,12 @@ export default function App() {
                         ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30'
                         : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 shadow-xs'
                     }`}
+                    title="Multiplicação (×)"
                   >
                     ×
                   </button>
 
-                  {/* Row 3 */}
+                  {/* Row 3: 4, 5, 6, − */}
                   <button
                     onClick={() => handleDigit('4')}
                     className="p-3.5 rounded-xl font-mono font-semibold text-xl text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 shadow-xs active:scale-95 transition-all"
@@ -713,11 +725,12 @@ export default function App() {
                         ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30'
                         : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 shadow-xs'
                     }`}
+                    title="Subtração (−)"
                   >
                     −
                   </button>
 
-                  {/* Row 4 */}
+                  {/* Row 4: 1, 2, 3, + */}
                   <button
                     onClick={() => handleDigit('1')}
                     className="p-3.5 rounded-xl font-mono font-semibold text-xl text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 shadow-xs active:scale-95 transition-all"
@@ -743,16 +756,24 @@ export default function App() {
                         ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30'
                         : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 shadow-xs'
                     }`}
+                    title="Adição (+)"
                   >
                     +
                   </button>
 
-                  {/* Row 5 */}
+                  {/* Row 5: 0, ⌫, Editando, = */}
                   <button
                     onClick={() => handleDigit('0')}
-                    className="col-span-2 p-3.5 rounded-xl font-mono font-semibold text-xl text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 shadow-xs active:scale-95 transition-all flex items-center justify-center"
+                    className="p-3.5 rounded-xl font-mono font-semibold text-xl text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 shadow-xs active:scale-95 transition-all flex items-center justify-center"
                   >
                     0
+                  </button>
+                  <button
+                    onClick={handleBackspace}
+                    className="p-3.5 rounded-xl font-mono font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 active:scale-95 transition-all text-sm flex items-center justify-center shadow-xs"
+                    title="Apagar dígito"
+                  >
+                    <RotateCcw className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => {
@@ -769,6 +790,7 @@ export default function App() {
                     onClick={handleExecuteCalculation}
                     disabled={isCalculating}
                     className="p-3.5 rounded-xl font-mono font-bold text-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/30 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50 border border-blue-700"
+                    title="Calcular resultado"
                   >
                     =
                   </button>
@@ -792,15 +814,19 @@ export default function App() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <span><strong>Cálculo de Porcentagem (%):</strong> Nova funcionalidade modular integrada via <code className="text-blue-700 font-mono bg-blue-50 px-1 py-0.5 rounded">PercentageOperation</code> (ex: 200 % 15 = 30).</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                     <span><strong>Divisão por zero tratada:</strong> lança <code className="text-rose-700 font-mono bg-rose-50 px-1 py-0.5 rounded">DivisionByZeroError</code> com mensagem personalizada em destaque.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <span><strong>Princípios SOLID:</strong> Estratégias isoladas (SRP), registro aberto (OCP), injeção via portas (DIP).</span>
+                    <span><strong>Princípios SOLID:</strong> Estratégias isoladas (SRP), registro aberto para novas operações (OCP), injeção via portas (DIP).</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <span><strong>24 Testes Unitários</strong> com <code className="text-slate-800 font-mono bg-slate-100 px-1 py-0.5 rounded">unittest</code> integrados e automatizados.</span>
+                    <span><strong>31 Testes Unitários</strong> com <code className="text-slate-800 font-mono bg-slate-100 px-1 py-0.5 rounded">unittest</code> integrados e automatizados.</span>
                   </li>
                 </ul>
               </div>
@@ -881,7 +907,7 @@ export default function App() {
                   <h2 className="text-lg font-bold text-slate-900">Suíte de Testes Unitários (Python unittest)</h2>
                 </div>
                 <p className="text-sm text-slate-600 mt-1">
-                  Validação automatizada das 4 operações aritméticas fundamentais, lançamento e mensagem personalizada de <code className="text-blue-700 font-mono font-medium">DivisionByZeroError</code>, portas e adaptadores.
+                  Validação automatizada das 5 operações fundamentais (+, −, ×, ÷, %), lançamento e mensagem de <code className="text-blue-700 font-mono font-medium">DivisionByZeroError</code>, portas e adaptadores.
                 </p>
               </div>
 
@@ -891,7 +917,7 @@ export default function App() {
                 className="px-5 py-2.5 rounded-xl font-medium text-sm bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 self-start md:self-auto border border-blue-700"
               >
                 <Play className={`w-4 h-4 ${isRunningTests ? 'animate-spin' : ''}`} />
-                <span>{isRunningTests ? 'Executando testes...' : 'Executar python3 -m unittest'}</span>
+                <span>{isRunningTests ? 'Executando testes...' : 'Executar testes (unittest)'}</span>
               </button>
             </div>
 
@@ -940,16 +966,17 @@ export default function App() {
                       test_operations.py
                     </span>
                     <span className="text-xs font-mono text-emerald-600 flex items-center gap-1 font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> 16 testes OK
+                      <CheckCircle2 className="w-3.5 h-3.5" /> 21 testes OK
                     </span>
                   </div>
-                  <h3 className="font-semibold text-sm text-slate-900 mb-2">Operações & Divisão por Zero</h3>
+                  <h3 className="font-semibold text-sm text-slate-900 mb-2">Operações & Porcentagem</h3>
                   <ul className="text-xs text-slate-600 space-y-1.5">
                     <li>• Adição de positivos, negativos e zero</li>
                     <li>• Subtração com inversão de sinal</li>
                     <li>• Multiplicação com fator absorvente (0)</li>
                     <li>• Divisão exata e inexata com precisão</li>
-                    <li className="text-blue-800 font-semibold">• Lançamento e validação de DivisionByZeroError</li>
+                    <li className="text-blue-800 font-semibold">• Divisão por zero com DivisionByZeroError</li>
+                    <li className="text-emerald-700 font-semibold">• Porcentagem inteira, decimal e comutativa</li>
                     <li>• Registro dinâmico de estratégias (OCP)</li>
                   </ul>
                 </div>
@@ -963,13 +990,14 @@ export default function App() {
                       test_service.py
                     </span>
                     <span className="text-xs font-mono text-emerald-600 flex items-center gap-1 font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> 4 testes OK
+                      <CheckCircle2 className="w-3.5 h-3.5" /> 5 testes OK
                     </span>
                   </div>
                   <h3 className="font-semibold text-sm text-slate-900 mb-2">Camada de Aplicação & Portas</h3>
                   <ul className="text-xs text-slate-600 space-y-1.5">
                     <li>• Implementação de CalculatorUseCasePort</li>
                     <li>• Injeção de dependência do repositório</li>
+                    <li>• Persistência auditável de adição e porcentagem</li>
                     <li>• Isolamento do histórico em caso de erro</li>
                     <li>• Validação de tipo estrita para inteiros</li>
                   </ul>
@@ -984,15 +1012,16 @@ export default function App() {
                       test_adapters.py
                     </span>
                     <span className="text-xs font-mono text-emerald-600 flex items-center gap-1 font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> 4 testes OK
+                      <CheckCircle2 className="w-3.5 h-3.5" /> 5 testes OK
                     </span>
                   </div>
                   <h3 className="font-semibold text-sm text-slate-900 mb-2">Adaptadores de Entrada (JSON/CLI)</h3>
                   <ul className="text-xs text-slate-600 space-y-1.5">
                     <li>• Serialização e desserialização JSON</li>
-                    <li>• Códigos padronizados (DIVISION_BY_ZERO)</li>
-                    <li>• Proteção contra parâmetros ausentes</li>
-                    <li>• Entrada robusta via linha de comando</li>
+                    <li>• Suporte à operação de porcentagem (%)</li>
+                    <li>• Códigos padronizados (DIVISION_BY_ZERO, INVALID_OPERATION)</li>
+                    <li>• Proteção contra parâmetros ausentes ou não numéricos</li>
+                    <li>• Integração ponta a ponta JSON string</li>
                   </ul>
                 </div>
               </div>
@@ -1009,7 +1038,7 @@ export default function App() {
                     <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
                   </div>
                   <span className="text-xs font-mono text-slate-300 font-semibold ml-2">
-                    Terminal Output: python3 -m unittest discover tests -v
+                    Terminal Output: python -m unittest discover tests -v
                   </span>
                 </div>
                 {testResult && (
@@ -1024,7 +1053,7 @@ export default function App() {
               </div>
 
               <pre className="font-mono text-xs text-slate-200 leading-relaxed overflow-x-auto max-h-96 p-3 bg-slate-950 rounded-xl border border-slate-800/80">
-                {testResult ? testResult.output : 'Clique em "Executar python3 -m unittest" acima para rodar a suíte.'}
+                {testResult ? testResult.output : 'Clique em "Executar testes (unittest)" acima para rodar a suíte.'}
               </pre>
             </div>
 
@@ -1044,7 +1073,7 @@ export default function App() {
                 Arquitetura Hexagonal (Ports & Adapters)
               </h2>
               <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-                A Arquitetura Hexagonal garante que o núcleo das regras de cálculo matemático permaneça <strong>100% puro e isolado</strong>, sem acoplamento a frameworks, servidores HTTP, banco de dados ou interfaces de usuário.
+                A Arquitetura Hexagonal garante que o núcleo das regras de cálculo matemático permaneça <strong>100% puro e isolado</strong>, sem acoplamento a frameworks, servidores HTTP, banco de dados ou interfaces de usuário. Novas operações como <strong>Porcentagem (%)</strong> foram adicionadas respeitando estritamente os princípios SOLID e o isolamento de portas.
               </p>
             </div>
 
@@ -1072,11 +1101,11 @@ export default function App() {
                     <div className="space-y-2 text-xs font-mono">
                       <div className="p-2.5 rounded-lg bg-white border border-slate-200 text-slate-800 shadow-xs">
                         <strong className="text-blue-700">CommandLineAdapter</strong>
-                        <div className="text-[11px] text-slate-500 font-sans mt-0.5">Interface interativa de terminal</div>
+                        <div className="text-[11px] text-slate-500 font-sans mt-0.5">Interface interativa de terminal com menu 1 a 7</div>
                       </div>
                       <div className="p-2.5 rounded-lg bg-white border border-slate-200 text-slate-800 shadow-xs">
                         <strong className="text-blue-700">JsonAdapter</strong>
-                        <div className="text-[11px] text-slate-500 font-sans mt-0.5">Entrada JSON para APIs e Web</div>
+                        <div className="text-[11px] text-slate-500 font-sans mt-0.5">Entrada JSON para APIs e Web (+, -, *, /, %)</div>
                       </div>
                       <div className="p-2.5 rounded-lg bg-white border border-slate-200 text-slate-800 shadow-xs">
                         <strong className="text-blue-700">Web UI (React)</strong>
@@ -1114,7 +1143,7 @@ export default function App() {
 
                       <div className="p-2.5 rounded-lg bg-white border border-blue-200 shadow-xs">
                         <span className="font-semibold text-slate-900">OperationStrategy & Registry</span>
-                        <p className="text-[11px] text-slate-600 mt-0.5">Estratégias independentes para +, -, * e /.</p>
+                        <p className="text-[11px] text-slate-600 mt-0.5">Estratégias independentes: Addition, Subtraction, Multiplication, Division e Percentage.</p>
                       </div>
 
                       <div className="p-2.5 rounded-lg bg-white border border-rose-200 shadow-xs">
@@ -1189,7 +1218,7 @@ export default function App() {
                     <h4 className="font-semibold text-sm text-slate-900">Single Responsibility</h4>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Cada classe possui responsabilidade única: <code className="text-blue-700 font-semibold">AdditionOperation</code> cuida apenas de somar; <code className="text-blue-700 font-semibold">DivisionOperation</code> cuida da divisão e validação do divisor zero; <code className="text-blue-700 font-semibold">CommandLineAdapter</code> formata apenas a CLI.
+                    Cada classe possui responsabilidade única: <code className="text-blue-700 font-semibold">AdditionOperation</code> cuida apenas de somar; <code className="text-blue-700 font-semibold">PercentageOperation</code> calcula exclusivamente a porcentagem <code className="text-blue-700 font-semibold">(a * b) / 100</code>; <code className="text-blue-700 font-semibold">DivisionOperation</code> cuida da divisão e validação de zero.
                   </p>
                 </div>
 
@@ -1202,7 +1231,7 @@ export default function App() {
                     <h4 className="font-semibold text-sm text-slate-900">Open/Closed Principle</h4>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Aberto para extensão, fechado para modificação. Novas operações podem ser adicionadas herdando de <code className="text-blue-700 font-semibold">OperationStrategy</code> e registradas no <code className="text-blue-700 font-semibold">OperationRegistry</code> sem alterar nenhuma linha do serviço central.
+                    Aberto para extensão, fechado para modificação. A nova funcionalidade de porcentagem foi implementada adicionando <code className="text-blue-700 font-semibold">PercentageOperation</code> ao <code className="text-blue-700 font-semibold">OperationRegistry</code> sem modificar a classe <code className="text-blue-700 font-semibold">CalculatorService</code>.
                   </p>
                 </div>
 
@@ -1215,7 +1244,7 @@ export default function App() {
                     <h4 className="font-semibold text-sm text-slate-900">Liskov Substitution</h4>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Qualquer subclasse de <code className="text-blue-700 font-semibold">OperationStrategy</code> pode ser utilizada de forma intercambiável pelo serviço sem quebrar a lógica de negócio. Todas obedecem rigorosamente à assinatura <code className="text-blue-700 font-semibold">execute(a, b)</code>.
+                    Todas as subclasses de <code className="text-blue-700 font-semibold">OperationStrategy</code> (<code className="text-blue-700 font-semibold">AdditionOperation</code>, <code className="text-blue-700 font-semibold">PercentageOperation</code>, etc.) respeitam fielmente o contrato da interface base através do método <code className="text-blue-700 font-semibold">execute(a, b)</code>.
                   </p>
                 </div>
 
@@ -1340,7 +1369,7 @@ export default function App() {
                 Guia de Execução no Terminal Local
               </h2>
               <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-                O código foi concebido para ser <strong>pronto para execução imediata</strong> em qualquer máquina com Python 3.8+ instalado, sem nenhuma dependência externa necessária (usa apenas a biblioteca padrão do Python).
+                O código foi concebido para ser <strong>pronto para execução imediata</strong> em qualquer máquina com Python instalado, sem nenhuma dependência externa necessária (usa apenas a biblioteca padrão do Python).
               </p>
             </div>
 
@@ -1355,7 +1384,7 @@ export default function App() {
                       Modo 1: Interativo (CLI)
                     </span>
                     <button
-                      onClick={() => copyToClipboard('python3 main.py', 'cli-1')}
+                      onClick={() => copyToClipboard('python main.py', 'cli-1')}
                       className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-mono transition-colors"
                     >
                       {copiedCli === 'cli-1' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -1364,10 +1393,10 @@ export default function App() {
                   </div>
                   <h3 className="font-semibold text-sm text-slate-900 mb-1">Menu Interativo no Console</h3>
                   <p className="text-xs text-slate-600 mb-3">
-                    Abre a calculadora no terminal com menu numérico (1 a 6) para calcular, ver histórico e limpar.
+                    Abre a calculadora no terminal com menu numérico (1 a 7) para somar, subtrair, multiplicar, dividir, calcular porcentagem, ver histórico e limpar.
                   </p>
                   <pre className="p-3 bg-slate-900 rounded-xl text-xs font-mono text-emerald-400 border border-slate-800">
-                    python3 main.py
+                    python main.py
                   </pre>
                 </div>
               </div>
@@ -1377,10 +1406,10 @@ export default function App() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold font-mono text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                      Modo 2: Cálculo Rápido
+                      Modo 2: Cálculo Rápido (Porcentagem)
                     </span>
                     <button
-                      onClick={() => copyToClipboard('python3 main.py --calc 81 "/" 3', 'cli-2')}
+                      onClick={() => copyToClipboard('python main.py --calc 200 "%" 15', 'cli-2')}
                       className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-mono transition-colors"
                     >
                       {copiedCli === 'cli-2' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -1389,10 +1418,10 @@ export default function App() {
                   </div>
                   <h3 className="font-semibold text-sm text-slate-900 mb-1">Passagem por Argumentos</h3>
                   <p className="text-xs text-slate-600 mb-3">
-                    Executa o cálculo diretamente e exibe a expressão com resultado no stdout.
+                    Executa o cálculo de porcentagem diretamente e exibe o resultado no terminal (ex: 15% de 200 = 30).
                   </p>
                   <pre className="p-3 bg-slate-900 rounded-xl text-xs font-mono text-emerald-400 border border-slate-800">
-                    python3 main.py --calc 81 '/' 3
+                    python main.py --calc 200 "%" 15
                   </pre>
                 </div>
               </div>
@@ -1405,7 +1434,7 @@ export default function App() {
                       Modo 3: Testar Divisão por Zero
                     </span>
                     <button
-                      onClick={() => copyToClipboard('python3 main.py --calc 100 "/" 0', 'cli-3')}
+                      onClick={() => copyToClipboard('python main.py --calc 100 "/" 0', 'cli-3')}
                       className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-mono transition-colors"
                     >
                       {copiedCli === 'cli-3' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -1417,7 +1446,7 @@ export default function App() {
                     Testa a captura de divisão por zero e exibição da mensagem tratada no terminal.
                   </p>
                   <pre className="p-3 bg-slate-900 rounded-xl text-xs font-mono text-rose-400 border border-slate-800">
-                    python3 main.py --calc 100 '/' 0
+                    python main.py --calc 100 '/' 0
                   </pre>
                 </div>
               </div>
@@ -1430,19 +1459,19 @@ export default function App() {
                       Modo 4: Suíte de Testes
                     </span>
                     <button
-                      onClick={() => copyToClipboard('python3 -m unittest discover tests -v', 'cli-4')}
+                      onClick={() => copyToClipboard('python -m unittest discover tests -v', 'cli-4')}
                       className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-mono transition-colors"
                     >
                       {copiedCli === 'cli-4' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>Copiar</span>
                     </button>
                   </div>
-                  <h3 className="font-semibold text-sm text-slate-900 mb-1">Executar Todos os 24 Testes</h3>
+                  <h3 className="font-semibold text-sm text-slate-900 mb-1">Executar Todos os 31 Testes</h3>
                   <p className="text-xs text-slate-600 mb-3">
                     Executa o runner padrão de testes unitários do Python com saída detalhada.
                   </p>
                   <pre className="p-3 bg-slate-900 rounded-xl text-xs font-mono text-blue-400 border border-slate-800">
-                    python3 -m unittest discover tests -v
+                    python -m unittest discover tests -v
                   </pre>
                 </div>
               </div>
@@ -1492,6 +1521,7 @@ export default function App() {
             <span>Subtração (−)</span>
             <span>Multiplicação (×)</span>
             <span>Divisão (÷)</span>
+            <span>Porcentagem (%)</span>
           </div>
         </div>
       </footer>

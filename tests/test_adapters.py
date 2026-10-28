@@ -27,6 +27,15 @@ class TestJsonAdapter(unittest.TestCase):
         self.assertEqual(res["data"]["result"], 72)
         self.assertEqual(res["data"]["formatted_expression"], "8 * 9 = 72")
 
+    def test_successful_percentage(self):
+        """Valida processamento com sucesso da operação de porcentagem."""
+        payload = {"operand_a": 200, "operand_b": 15, "operation": "%"}
+        res = self.adapter.process_request(payload)
+
+        self.assertTrue(res["success"])
+        self.assertEqual(res["data"]["result"], 30)
+        self.assertEqual(res["data"]["formatted_expression"], "200 % 15 = 30")
+
     def test_division_by_zero_error_response(self):
         """Valida que divisão por zero retorna payload de erro customizado com código explicativo."""
         payload = {"operand_a": 50, "operand_b": 0, "operation": "/"}
@@ -46,11 +55,12 @@ class TestJsonAdapter(unittest.TestCase):
 
     def test_invalid_operation_symbol(self):
         """Valida quando o símbolo da operação não é suportado."""
-        payload = {"operand_a": 10, "operand_b": 5, "operation": "%"}
+        payload = {"operand_a": 10, "operand_b": 5, "operation": "^"}
         res = self.adapter.process_request(payload)
 
         self.assertFalse(res["success"])
         self.assertEqual(res["code"], "INVALID_OPERATION")
+        self.assertIn("A operação '^' não é suportada", res["error"])
 
     def test_process_json_string_integration(self):
         """Valida fluxo completo convertendo string JSON para string JSON de saída."""

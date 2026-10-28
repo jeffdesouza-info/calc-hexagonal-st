@@ -15,6 +15,7 @@ class OperationType(str, Enum):
     SUBTRACT = "-"
     MULTIPLY = "*"
     DIVIDE = "/"
+    PERCENT = "%"
 
     @classmethod
     def from_string(cls, value: str) -> "OperationType":
@@ -39,6 +40,14 @@ class OperationType(str, Enum):
             "div": cls.DIVIDE,
             "divisao": cls.DIVIDE,
             "divisão": cls.DIVIDE,
+            "%": cls.PERCENT,
+            "mod": cls.PERCENT,
+            "percent": cls.PERCENT,
+            "percentage": cls.PERCENT,
+            "porcentagem": cls.PERCENT,
+            "porcento": cls.PERCENT,
+            "por cento": cls.PERCENT,
+            "pct": cls.PERCENT,
         }
         if clean_val in mapping:
             return mapping[clean_val]

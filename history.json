@@ -38,5 +38,77 @@
     "result": 11,
     "formatted_expression": "10 + 1 = 11",
     "timestamp": "2026-10-28T03:34:21.304933"
+  },
+  {
+    "operand_a": 200,
+    "operand_b": 15,
+    "operation": "*",
+    "result": 3000,
+    "formatted_expression": "200 * 15 = 3000",
+    "timestamp": "2026-10-28T18:26:34.068259"
+  },
+  {
+    "operand_a": 200,
+    "operand_b": 15,
+    "operation": "*",
+    "result": 3000,
+    "formatted_expression": "200 * 15 = 3000",
+    "timestamp": "2026-10-28T18:27:13.050646"
+  },
+  {
+    "operand_a": 200,
+    "operand_b": 15,
+    "operation": "%",
+    "result": 30,
+    "formatted_expression": "200 % 15 = 30",
+    "timestamp": "2026-10-28T18:29:51.752511"
+  },
+  {
+    "operand_a": 25,
+    "operand_b": 10,
+    "operation": "%",
+    "result": 2.5,
+    "formatted_expression": "25 % 10 = 2.5",
+    "timestamp": "2026-10-28T18:29:52.331448"
+  },
+  {
+    "operand_a": 15,
+    "operand_b": 25,
+    "operation": "+",
+    "result": 40,
+    "formatted_expression": "15 + 25 = 40",
+    "timestamp": "2026-10-28T18:44:38.548943"
+  },
+  {
+    "operand_a": 50,
+    "operand_b": 20,
+    "operation": "-",
+    "result": 30,
+    "formatted_expression": "50 - 20 = 30",
+    "timestamp": "2026-10-28T18:44:38.915492"
+  },
+  {
+    "operand_a": 6,
+    "operand_b": 7,
+    "operation": "*",
+    "result": 42,
+    "formatted_expression": "6 * 7 = 42",
+    "timestamp": "2026-10-28T18:44:39.297791"
+  },
+  {
+    "operand_a": 81,
+    "operand_b": 3,
+    "operation": "/",
+    "result": 27,
+    "formatted_expression": "81 / 3 = 27",
+    "timestamp": "2026-10-28T18:44:39.778947"
+  },
+  {
+    "operand_a": 200,
+    "operand_b": 15,
+    "operation": "%",
+    "result": 30,
+    "formatted_expression": "200 % 15 = 30",
+    "timestamp": "2026-10-28T18:44:40.346127"
   }
 ]

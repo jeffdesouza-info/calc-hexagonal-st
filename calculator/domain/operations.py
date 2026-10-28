@@ -59,6 +59,20 @@ class DivisionOperation(OperationStrategy):
         return round(a / b, 6)
 
 
+class PercentageOperation(OperationStrategy):
+    """Estratégia responsável exclusivamente pela operação de Porcentagem (SRP).
+    
+    Calcula a porcentagem entre dois valores: (a * b) / 100.
+    Exemplo: 200 % 15 = 30 (15% de 200).
+    """
+
+    def execute(self, a: int, b: int) -> Union[int, float]:
+        product = a * b
+        if product % 100 == 0:
+            return product // 100
+        return round(product / 100, 6)
+
+
 class OperationRegistry:
     """Registro desacoplado de operações (Open/Closed Principle).
     
@@ -71,6 +85,7 @@ class OperationRegistry:
             OperationType.SUBTRACT: SubtractionOperation(),
             OperationType.MULTIPLY: MultiplicationOperation(),
             OperationType.DIVIDE: DivisionOperation(),
+            OperationType.PERCENT: PercentageOperation(),
         }
 
     def register(self, op_type: OperationType, strategy: OperationStrategy) -> None:

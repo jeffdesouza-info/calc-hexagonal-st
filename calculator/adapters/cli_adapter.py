@@ -28,8 +28,9 @@ class CommandLineAdapter:
             print("  [2] Subtração (-)")
             print("  [3] Multiplicação (*)")
             print("  [4] Divisão (/)")
-            print("  [5] Visualizar Histórico")
-            print("  [6] Limpar Histórico")
+            print("  [5] Porcentagem (%)")
+            print("  [6] Visualizar Histórico")
+            print("  [7] Limpar Histórico")
             print("  [0] Sair")
 
             escolha = input("\nDigite o número da opção desejada: ").strip()
@@ -38,25 +39,26 @@ class CommandLineAdapter:
                 print("\nEncerrando a calculadora. Até breve!")
                 break
 
-            if escolha in ("1", "2", "3", "4"):
+            if escolha in ("1", "2", "3", "4", "5"):
                 op_map = {
                     "1": OperationType.ADD,
                     "2": OperationType.SUBTRACT,
                     "3": OperationType.MULTIPLY,
                     "4": OperationType.DIVIDE,
+                    "5": OperationType.PERCENT,
                 }
                 op = op_map[escolha]
                 self._handle_calculation(op)
 
-            elif escolha == "5":
+            elif escolha == "6":
                 self._display_history()
 
-            elif escolha == "6":
+            elif escolha == "7":
                 self._use_case.clear_history()
                 print("\n✅ Histórico limpo com sucesso!")
 
             else:
-                print("\n⚠️ Opção inválida! Escolha uma das opções entre 0 e 6.")
+                print("\n⚠️ Opção inválida! Escolha uma das opções entre 0 e 7.")
 
     def _handle_calculation(self, op: OperationType) -> None:
         """Solicita os operandos inteiros e executa a operação tratando exceções."""

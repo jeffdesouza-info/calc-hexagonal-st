@@ -30,6 +30,19 @@ class TestCalculatorService(unittest.TestCase):
         self.assertEqual(len(history), 1)
         self.assertEqual(history[0].result, 40)
 
+    def test_calculate_percentage_and_persists_history(self):
+        """Valida cálculo de porcentagem e sua persistência no histórico."""
+        req = CalculationRequest(operand_a=200, operand_b=15, operation=OperationType.PERCENT)
+        res = self.service.calculate(req)
+
+        self.assertEqual(res.result, 30)
+        self.assertEqual(res.formatted_expression, "200 % 15 = 30")
+
+        history = self.service.get_history()
+        self.assertEqual(len(history), 1)
+        self.assertEqual(history[0].result, 30)
+        self.assertEqual(history[0].operation, OperationType.PERCENT)
+
     def test_calculate_division_by_zero_does_not_corrupt_history(self):
         """Valida que divisão por zero lança exceção personalizada e não polui o histórico."""
         req = CalculationRequest(operand_a=100, operand_b=0, operation=OperationType.DIVIDE)

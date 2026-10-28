@@ -55,7 +55,7 @@ class JsonAdapter:
             except ValueError:
                 return {
                     "success": False,
-                    "error": f"Erro: A operação '{raw_op}' não é suportada. Use: +, -, * ou /.",
+                    "error": f"Erro: A operação '{raw_op}' não é suportada. Use: +, -, *, / ou %.",
                     "code": "INVALID_OPERATION",
                 }
 
