@@ -1,0 +1,6 @@
+{
+  "name": "Calculadora Hexagonal Python",
+  "description": "Calculadora aritmética modular em Python com arquitetura hexagonal, princípios SOLID, testes unitários e interface web responsiva.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
