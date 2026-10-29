@@ -1384,11 +1384,11 @@ export default function App() {
                       Modo 1: Interativo (CLI)
                     </span>
                     <button
-                      onClick={() => copyToClipboard('python main.py', 'cli-1')}
+                      onClick={() => copyToClipboard('py main.py', 'cli-1')}
                       className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-mono transition-colors"
                     >
                       {copiedCli === 'cli-1' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>Copiar</span>
+                      <span>Copiar (py)</span>
                     </button>
                   </div>
                   <h3 className="font-semibold text-sm text-slate-900 mb-1">Menu Interativo no Console</h3>
@@ -1396,7 +1396,8 @@ export default function App() {
                     Abre a calculadora no terminal com menu numérico (1 a 7) para somar, subtrair, multiplicar, dividir, calcular porcentagem, ver histórico e limpar.
                   </p>
                   <pre className="p-3 bg-slate-900 rounded-xl text-xs font-mono text-emerald-400 border border-slate-800">
-                    python main.py
+                    # Windows: py main.py&#10;
+                    # Linux/macOS: python3 main.py
                   </pre>
                 </div>
               </div>
@@ -1409,7 +1410,7 @@ export default function App() {
                       Modo 2: Cálculo Rápido (Porcentagem)
                     </span>
                     <button
-                      onClick={() => copyToClipboard('python main.py --calc 200 "%" 15', 'cli-2')}
+                      onClick={() => copyToClipboard('py main.py --calc 200 "%" 15', 'cli-2')}
                       className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-mono transition-colors"
                     >
                       {copiedCli === 'cli-2' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -1421,7 +1422,7 @@ export default function App() {
                     Executa o cálculo de porcentagem diretamente e exibe o resultado no terminal (ex: 15% de 200 = 30).
                   </p>
                   <pre className="p-3 bg-slate-900 rounded-xl text-xs font-mono text-emerald-400 border border-slate-800">
-                    python main.py --calc 200 "%" 15
+                    py main.py --calc 200 "%" 15
                   </pre>
                 </div>
               </div>
@@ -1434,7 +1435,7 @@ export default function App() {
                       Modo 3: Testar Divisão por Zero
                     </span>
                     <button
-                      onClick={() => copyToClipboard('python main.py --calc 100 "/" 0', 'cli-3')}
+                      onClick={() => copyToClipboard('py main.py --calc 100 "/" 0', 'cli-3')}
                       className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-mono transition-colors"
                     >
                       {copiedCli === 'cli-3' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -1446,7 +1447,7 @@ export default function App() {
                     Testa a captura de divisão por zero e exibição da mensagem tratada no terminal.
                   </p>
                   <pre className="p-3 bg-slate-900 rounded-xl text-xs font-mono text-rose-400 border border-slate-800">
-                    python main.py --calc 100 '/' 0
+                    py main.py --calc 100 '/' 0
                   </pre>
                 </div>
               </div>
@@ -1459,7 +1460,7 @@ export default function App() {
                       Modo 4: Suíte de Testes
                     </span>
                     <button
-                      onClick={() => copyToClipboard('python -m unittest discover tests -v', 'cli-4')}
+                      onClick={() => copyToClipboard('py -m unittest discover tests -v', 'cli-4')}
                       className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 font-mono transition-colors"
                     >
                       {copiedCli === 'cli-4' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -1471,7 +1472,7 @@ export default function App() {
                     Executa o runner padrão de testes unitários do Python com saída detalhada.
                   </p>
                   <pre className="p-3 bg-slate-900 rounded-xl text-xs font-mono text-blue-400 border border-slate-800">
-                    python -m unittest discover tests -v
+                    py -m unittest discover tests -v
                   </pre>
                 </div>
               </div>

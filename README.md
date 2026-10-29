@@ -152,13 +152,23 @@ A integridade matemática e a consistência das operações são preservadas atr
 
 ## 🚀 6. Como Executar
 
+> [!NOTE]
+> **Atenção para o ambiente Windows:** Caso o comando `python` ou `python3` tente abrir a Microsoft Store devido ao alias padrão do sistema operacional, utilize o inicializador padrão do Python no Windows: **`py`**. No Linux ou macOS, utilize `python3`.
+
 ### 6.1 Modo Interativo no Terminal (CLI)
 Para executar a calculadora interativa com menu no terminal:
-```bash
-python main.py
-# ou python3 main.py
+
+**No Windows (PowerShell / CMD):**
+```powershell
+py main.py
 ```
-Menu disponível:
+
+**No Linux / macOS:**
+```bash
+python3 main.py
+```
+
+Menu interativo disponível:
 ```text
 Selecione uma opção:
   [1] Adição (+)
@@ -172,17 +182,31 @@ Selecione uma opção:
 ```
 
 ### 6.2 Modo de Cálculo Rápido via Linha de Comando
+Execute cálculos imediatos passando os operandos e o operador:
+
+**No Windows (PowerShell / CMD):**
+```powershell
+py main.py --calc 15 + 27
+py main.py --calc 200 "%" 15   # Calcula 15% de 200 = 30
+py main.py --calc 25 "%" 10    # Retorna 2.5
+py main.py --calc 100 / 4
+py main.py --calc 100 / 0      # Exibirá a mensagem personalizada de erro
+```
+
+**No Linux / macOS:**
 ```bash
-python main.py --calc 15 + 27
-python main.py --calc 200 "%" 15   # Calcula 15% de 200 = 30
-python main.py --calc 25 "%" 10    # Retorna 2.5
-python main.py --calc 100 / 4
-python main.py --calc 100 / 0      # Exibirá a mensagem personalizada de erro
+python3 main.py --calc 15 + 27
+python3 main.py --calc 200 "%" 15
+python3 main.py --calc 25 "%" 10
+python3 main.py --calc 100 / 4
+python3 main.py --calc 100 / 0
 ```
 
 ### 6.3 Modo JSON (para APIs ou Scripts)
 ```bash
-python main.py --json '{"operand_a": 200, "operand_b": 15, "operation": "%"}'
+py main.py --json '{"operand_a": 200, "operand_b": 15, "operation": "%"}'
+# No Linux/macOS:
+# python3 main.py --json '{"operand_a": 200, "operand_b": 15, "operation": "%"}'
 ```
 Retorno:
 ```json
@@ -191,18 +215,39 @@ Retorno:
 
 ### 6.4 Execução da Suíte de Testes Unitários
 Para rodar todos os **31 testes** com saída detalhada:
-```bash
-python -m unittest discover tests -v
+
+**No Windows:**
+```powershell
+py -m unittest discover tests -v
 # ou
-python main.py --test
+py main.py --test
 ```
 
-### 6.5 Execução do Frontend Web Responsivo
-A aplicação dispõe de uma interface web desenvolvida com React e Tailwind CSS:
+**No Linux / macOS:**
+```bash
+python3 -m unittest discover tests -v
+# ou
+python3 main.py --test
+```
+
+### 6.5 Execução do Frontend Web Responsivo (React + Express)
+A aplicação conta com um servidor full-stack Express integrando o motor Python e uma interface web moderna em React e Tailwind CSS.
+
+**Passo 1 — Instalar as dependências do projeto:**
+> Necessário apenas na primeira execução para gerar a pasta `node_modules`.
+
+```bash
+npm install
+```
+*(Caso utilize versões legadas de ferramentas que sinalizem conflito estrito de dependências paritárias, execute: `npm install --legacy-peer-deps`)*
+
+**Passo 2 — Iniciar o servidor de desenvolvimento:**
 ```bash
 npm run dev
 ```
-Abra o navegador no endereço indicado (porta 3000) para usar a calculadora gráfica, executar testes em tempo real e inspecionar a arquitetura interativa.
+
+**Passo 3 — Acessar a aplicação:**
+Abra o navegador no endereço: **`http://localhost:3000`** para interagir com a calculadora gráfica, executar os 31 testes unitários em tempo real e inspecionar a arquitetura e os códigos do projeto.
 
 ---
 

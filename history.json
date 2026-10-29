@@ -110,5 +110,37 @@
     "result": 30,
     "formatted_expression": "200 % 15 = 30",
     "timestamp": "2026-10-28T18:44:40.346127"
+  },
+  {
+    "operand_a": 200,
+    "operand_b": 15,
+    "operation": "%",
+    "result": 30,
+    "formatted_expression": "200 % 15 = 30",
+    "timestamp": "2026-10-29T00:06:23.751330"
+  },
+  {
+    "operand_a": 25,
+    "operand_b": 5,
+    "operation": "%",
+    "result": 1.25,
+    "formatted_expression": "25 % 5 = 1.25",
+    "timestamp": "2026-10-29T00:26:46.024034"
+  },
+  {
+    "operand_a": 90,
+    "operand_b": 5,
+    "operation": "%",
+    "result": 4.5,
+    "formatted_expression": "90 % 5 = 4.5",
+    "timestamp": "2026-10-29T00:27:00.970452"
+  },
+  {
+    "operand_a": 10,
+    "operand_b": 2,
+    "operation": "*",
+    "result": 20,
+    "formatted_expression": "10 * 2 = 20",
+    "timestamp": "2026-10-29T00:27:22.391206"
   }
 ]
