@@ -17,7 +17,7 @@ Com foco em engenharia de software de alta qualidade:
 - **Separação rigorosa de responsabilidades**;
 - **Isolamento completo do núcleo de negócio (Domain Core)** de interfaces e tecnologias externas;
 - **Mensagens de erro amigáveis e personalizadas** para divisões por zero e dados inválidos;
-- **Testabilidade total** via testes automatizados com `unittest` (31 testes com 100% de sucesso).
+- **Testabilidade total** via testes automatizados com `unittest` (33 testes com 100% de sucesso).
 
 ---
 
@@ -257,19 +257,19 @@ Com base nas diretrizes de ergonomia visual e usabilidade:
 
 ### 7.1 Teclado Ergonômico e Botão de Porcentagem (%)
 - **Grade 4x5 Perfeita e Simétrica**: O teclado foi organizado em 5 linhas de 4 teclas proporcionais:
-  - **Linha 1**: `AC` (Limpar tudo), `±` (Inverter sinal), `%` (Porcentagem), `÷` (Divisão).
+  - **Linha 1**: `AC` (Limpar tudo / All Clear), `±` (Inverter sinal), `%` (Porcentagem), `÷` (Divisão).
   - **Linha 2**: `7`, `8`, `9`, `×` (Multiplicação).
   - **Linha 3**: `4`, `5`, `6`, `−` (Subtração).
   - **Linha 4**: `1`, `2`, `3`, `+` (Adição).
-  - **Linha 5**: `0`, `⌫` (Apagar dígito), `Editando A/B` (Alternar operando), `=` (Calcular).
-- **Posicionamento Universal**: A tecla `%` localiza-se na primeira linha, ao lado de `±` e `÷`, correspondendo ao padrão consagrado de calculadoras de sistemas operacionais modernos (iOS, macOS, Windows).
-- **Destaque Visual do Operador Ativo**: Ao selecionar `%`, o botão recebe preenchimento azul de alto contraste e a linha superior do display exibe a expressão em construção (ex: `200 %`).
+  - **Linha 5**: `0`, `⌫` (Apagar último caractere), `CE` (Limpar entrada atual / Clear Entry), `=` (Calcular resultado).
+- **Posicionamento Universal**: A tecla `%` localiza-se na primeira linha, ao lado de `±` e `÷`, correspondendo ao padrão consagrado de calculadoras modernas (iOS, macOS, Windows).
+- **Destaque Visual do Operador Ativo**: Ao selecionar `%` ou qualquer operador, o botão recebe realce visual e a linha superior do display exibe a expressão com operandos interativos e clicáveis.
 
-### 7.2 Exibição do Resultado no Display Principal
+### 7.2 Exibição Contínua no Visor e Encadeamento Fluido
+- **Visor Contínuo**: Ao selecionar uma operação (`%`, `+`, `−`, `×`, `÷`), o visor principal mantém visível o primeiro operando até que o usuário inicie a digitação do segundo operando, eliminando saltos indesejados para zero.
 - **Visor Central em Grande Destaque**: Ao pressionar `=`, o valor calculado surge no centro do visor (ex: `30` após calcular `200 % 15`).
-- **Linha Superior de Rastro**: A expressão completa (`200 % 15 =`) permanece visível na linha superior em tom cinza suave.
-- **Encadeamento Fluido**: O resultado calculado pode ser aproveitado de imediato no próximo cálculo sem necessidade de redigitação.
-- **Cenários Rápidos**: O bloco de cenários inclui atalhos diretos, incluindo `200 % 15 (30)`, demonstrando a nova funcionalidade de porcentagem em um clique.
+- **Encadeamento Fluido Automático**: Pressionar um operador após o resultado aproveita o valor imediatamente. Da mesma forma, encadear operações em sequência (ex: `200 % 15 + 10 =`) calcula o valor intermediário (`30`) e aplica a nova operação de forma transparente.
+- **Suporte Total a Teclado Físico**: Usuários em desktop/laptop podem digitar diretamente pelo teclado: números `0` a `9`, operadores `+`, `-`, `*`, `/`, `%`, `Enter` ou `=` para calcular, `Backspace` para apagar dígito, `Esc` para limpar tudo (AC) e `Delete` para limpar entrada ativa (CE).
 
 ### 7.3 Paleta Visual Limpa (Fundo Branco, Tons de Azul e Cinza)
 - **Fundo da Aplicação**: Fundo neutro e claro (`#f8fafc` / `bg-slate-50`), garantindo alto contraste e leitura sem fadiga visual.
@@ -293,3 +293,29 @@ A camada de integração (`server.ts`) assegura resiliência e alta disponibilid
      - Persiste no `history.json` para garantir integridade com o repositório.
 4. **Validação Prévia de Operandos**:
    - Converte e valida entradas inteiras antes do despacho, prevenindo que valores inválidos ou `NaN` cheguem ao núcleo de cálculo.
+
+---
+
+## 🔍 9. Relatório de Revisão e Ajustes Efetuados
+
+Durante a revisão do projeto após a inclusão da funcionalidade de cálculo de porcentagem, foram avaliados o fluxo interativo na tela, a aderência à arquitetura hexagonal e a eficácia da suíte de testes.
+
+### 9.1 Problemas Diagnosticados na Tela
+1. **Zeramento Prematuro do Display**: Ao clicar no botão de porcentagem (`%`) ou em qualquer operador após digitar o primeiro número (ex: `200`), o display principal saltava instantaneamente para `0` antes mesmo do usuário digitar o segundo operando. Isso causava a falsa impressão de que o valor anterior havia sido apagado.
+2. **Falta de Encadeamento Contínuo**: Ao digitar sequências como `200 % 15` e clicar diretamente em outro operador (ex: `+`), a operação anterior era substituída pelo novo operador sem calcular o resultado intermediário (`30`), corrompendo a expressão.
+3. **Botão Incomum "Editando A/B" no Teclado**: O layout continha um botão de alternância manual que confundia a ergonomia da calculadora e permitia estados inconsistentes de entrada.
+4. **Inversão de Sinal (±) Limitada**: O botão `±` não respondia se o campo estivesse vazio, forçando o usuário a digitar primeiro o algarismo para depois inverter o sinal.
+5. **Inexistência de Manipulação por Teclado Físico**: Usuários acessando pelo computador precisavam clicar com o mouse em todas as teclas, pois os eventos de teclado não eram interceptados.
+6. **Lacuna em Testes de Integração de Adaptador para Porcentagem**: O adaptador JSON não possuía testes para os aliases amigáveis definidos no modelo de domínio (`"percent"`, `"pct"`, `"porcentagem"`, `"porcento"`).
+
+### 9.2 Ajustes Implementados
+1. **Exibição Contínua no Visor**: Ajustada a função `getPrimaryDisplayValue()` para manter visível o primeiro operando (`operandA`) enquanto o usuário ainda não tiver começado a digitar o segundo operando (`operandB`).
+2. **Encadeamento Aritmético Automático**: Implementado o cálculo intermediário automático no `handleSelectOperation()`. Ao selecionar um novo operador com uma expressão pendente, a calculadora resolve a operação atual e imediatamente posiciona o novo operador para o próximo número.
+3. **Substituição pelo Botão `CE` (Clear Entry)**: O botão "Editando" foi substituído pelo padrão universal `CE` (limpa a entrada do operando ativo sem zerar todo o cálculo). Além disso, os operandos na linha superior tornaram-se interativos e clicáveis para troca rápida de foco.
+4. **Inversão de Sinal Dinâmica**: O botão `±` agora permite iniciar diretamente um operando negativo (inserindo `-`), além de inverter valores já preenchidos ou resultados calculados.
+5. **Suporte Completo a Teclado Físico**: Adicionado ouvinte global de teclado (`keydown`) com prevenção de conflitos em inputs/textareas, mapeando dígitos `0-9`, operadores `+`, `-`, `*`, `/`, `%`, `Enter`/`=`, `Backspace`, `Esc` (AC) e `Delete` (CE).
+6. **Expansão da Suíte de Testes (33 testes)**: Adicionados 2 novos testes no `tests/test_adapters.py`:
+   - `test_successful_percentage_with_text_aliases`: validação dos aliases `"porcentagem"`, `"percent"`, `"pct"`, `"porcento"`.
+   - `test_percentage_with_negative_operands`: validação de porcentagens com operandos negativos via adaptador JSON.
+   - **Resultado**: 33 testes executados com 100% de sucesso.
+

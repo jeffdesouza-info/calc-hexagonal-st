@@ -62,6 +62,23 @@ class TestJsonAdapter(unittest.TestCase):
         self.assertEqual(res["code"], "INVALID_OPERATION")
         self.assertIn("A operação '^' não é suportada", res["error"])
 
+    def test_successful_percentage_with_text_aliases(self):
+        """Valida que aliases textuais de porcentagem ('porcentagem', 'percent', 'pct') são aceitos."""
+        aliases = ["porcentagem", "percent", "pct", "porcento"]
+        for alias in aliases:
+            payload = {"operand_a": 100, "operand_b": 20, "operation": alias}
+            res = self.adapter.process_request(payload)
+            self.assertTrue(res["success"], f"Falha com alias: {alias}")
+            self.assertEqual(res["data"]["result"], 20)
+            self.assertEqual(res["data"]["operation"], "%")
+
+    def test_percentage_with_negative_operands(self):
+        """Valida porcentagem com operandos negativos via JSON Adapter."""
+        payload = {"operand_a": -200, "operand_b": 15, "operation": "%"}
+        res = self.adapter.process_request(payload)
+        self.assertTrue(res["success"])
+        self.assertEqual(res["data"]["result"], -30)
+
     def test_process_json_string_integration(self):
         """Valida fluxo completo convertendo string JSON para string JSON de saída."""
         json_in = '{"operand_a": 100, "operand_b": 25, "operation": "/"}'
@@ -73,3 +90,4 @@ class TestJsonAdapter(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

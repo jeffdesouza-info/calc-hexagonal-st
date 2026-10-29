@@ -142,5 +142,21 @@
     "result": 20,
     "formatted_expression": "10 * 2 = 20",
     "timestamp": "2026-10-29T00:27:22.391206"
+  },
+  {
+    "operand_a": 200,
+    "operand_b": 15,
+    "operation": "%",
+    "result": 30,
+    "formatted_expression": "200 % 15 = 30",
+    "timestamp": "2026-10-29T13:49:28.353014"
+  },
+  {
+    "operand_a": 200,
+    "operand_b": 15,
+    "operation": "%",
+    "result": 30,
+    "formatted_expression": "200 % 15 = 30",
+    "timestamp": "2026-10-29T13:55:28.389758"
   }
 ]

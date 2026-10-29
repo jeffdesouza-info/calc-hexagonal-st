@@ -165,6 +165,8 @@ export default function App() {
       if (digit === '0' && operandA === '0') return;
       if (operandA === '0') {
         setOperandA(digit);
+      } else if (operandA === '-0') {
+        setOperandA('-' + digit);
       } else {
         setOperandA(prev => prev + digit);
       }
@@ -172,6 +174,8 @@ export default function App() {
       if (digit === '0' && operandB === '0') return;
       if (operandB === '0') {
         setOperandB(digit);
+      } else if (operandB === '-0') {
+        setOperandB('-' + digit);
       } else {
         setOperandB(prev => prev + digit);
       }
@@ -199,6 +203,20 @@ export default function App() {
     }
   };
 
+  const handleClearEntry = () => {
+    setErrorMessage(null);
+    setErrorCode(null);
+    if (isShowingCalculatedResult) {
+      handleResetCalculator();
+      return;
+    }
+    if (activeInput === 'B') {
+      setOperandB('');
+    } else {
+      setOperandA('');
+    }
+  };
+
   const handleToggleSign = () => {
     setErrorMessage(null);
     setErrorCode(null);
@@ -210,10 +228,22 @@ export default function App() {
       return;
     }
 
-    if (activeInput === 'A' && operandA) {
-      setOperandA(prev => (prev.startsWith('-') ? prev.slice(1) : '-' + prev));
-    } else if (activeInput === 'B' && operandB) {
-      setOperandB(prev => (prev.startsWith('-') ? prev.slice(1) : '-' + prev));
+    if (activeInput === 'A') {
+      if (operandA === '' || operandA === '0') {
+        setOperandA('-');
+      } else if (operandA === '-') {
+        setOperandA('');
+      } else {
+        setOperandA(prev => (prev.startsWith('-') ? prev.slice(1) : '-' + prev));
+      }
+    } else if (activeInput === 'B') {
+      if (operandB === '' || operandB === '0') {
+        setOperandB('-');
+      } else if (operandB === '-') {
+        setOperandB('');
+      } else {
+        setOperandB(prev => (prev.startsWith('-') ? prev.slice(1) : '-' + prev));
+      }
     }
   };
 
@@ -221,7 +251,7 @@ export default function App() {
     setErrorMessage(null);
     setErrorCode(null);
 
-    // Se estiver exibindo o resultado anterior, encadeia a operação usando o resultado como operandA!
+    // Se estiver exibindo o resultado anterior, encadeia a operação usando o resultado como operandA
     if (isShowingCalculatedResult && calculatedValue !== null) {
       setOperandA(String(calculatedValue));
       setOperandB('');
@@ -230,6 +260,16 @@ export default function App() {
       setIsShowingCalculatedResult(false);
       setLastCompletedExpression(`${calculatedValue} ${op}`);
       return;
+    }
+
+    // Encadeamento automático: Se já temos A, operação e B digitado, calcula intermediário
+    if (operandA !== '' && operation !== null && operandB !== '') {
+      const numA = parseInt(operandA, 10);
+      const numB = parseInt(operandB, 10);
+      if (!isNaN(numA) && !isNaN(numB)) {
+        executeCalculationWith(numA, numB, operation, op);
+        return;
+      }
     }
 
     if (!operandA) {
@@ -253,7 +293,12 @@ export default function App() {
     setErrorCode(null);
   };
 
-  const executeCalculationWith = async (a: number, b: number, op: '+' | '-' | '*' | '/' | '%') => {
+  const executeCalculationWith = async (
+    a: number,
+    b: number,
+    op: '+' | '-' | '*' | '/' | '%',
+    nextOp?: '+' | '-' | '*' | '/' | '%'
+  ) => {
     setIsCalculating(true);
     setErrorMessage(null);
     setErrorCode(null);
@@ -272,16 +317,25 @@ export default function App() {
       const data = await response.json();
 
       if (data.success && data.data) {
-        // DECISÃO DE UX/UI: Exibir o resultado calculado DIRETAMENTE no display principal com grande destaque!
-        setCalculatedValue(data.data.result);
-        setIsShowingCalculatedResult(true);
-        setLastCompletedExpression(`${a} ${op} ${b} =`);
-        
-        // Prepara operandA para permitir encadeamento automático do próximo cálculo
-        setOperandA(String(data.data.result));
-        setOperandB('');
-        setOperation(null);
-        setActiveInput('A');
+        const resultVal = data.data.result;
+        setCalculatedValue(resultVal);
+
+        if (nextOp) {
+          // Encadeamento imediato para próxima operação
+          setOperandA(String(resultVal));
+          setOperation(nextOp);
+          setOperandB('');
+          setActiveInput('B');
+          setIsShowingCalculatedResult(false);
+          setLastCompletedExpression(`${resultVal} ${nextOp}`);
+        } else {
+          setIsShowingCalculatedResult(true);
+          setLastCompletedExpression(`${a} ${op} ${b} =`);
+          setOperandA(String(resultVal));
+          setOperandB('');
+          setOperation(null);
+          setActiveInput('A');
+        }
 
         fetchHistory();
       } else {
@@ -340,16 +394,63 @@ export default function App() {
     }
   };
 
+  // Suporte a teclado físico (Physical Keyboard Navigation)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      if (activeTab !== 'calculator') return;
+
+      if (e.key >= '0' && e.key <= '9') {
+        e.preventDefault();
+        handleDigit(e.key);
+      } else if (e.key === '+') {
+        e.preventDefault();
+        handleSelectOperation('+');
+      } else if (e.key === '-') {
+        e.preventDefault();
+        handleSelectOperation('-');
+      } else if (e.key === '*' || e.key === 'x' || e.key === 'X') {
+        e.preventDefault();
+        handleSelectOperation('*');
+      } else if (e.key === '/') {
+        e.preventDefault();
+        handleSelectOperation('/');
+      } else if (e.key === '%') {
+        e.preventDefault();
+        handleSelectOperation('%');
+      } else if (e.key === 'Enter' || e.key === '=') {
+        e.preventDefault();
+        handleExecuteCalculation();
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        handleBackspace();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        handleResetCalculator();
+      } else if (e.key === 'Delete') {
+        e.preventDefault();
+        handleClearEntry();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab, operandA, operandB, operation, activeInput, isShowingCalculatedResult, calculatedValue]);
+
   // Valor a ser exibido no display principal
   const getPrimaryDisplayValue = () => {
-    if (errorMessage && errorCode === 'DIVISION_BY_ZERO') {
-      return 'Erro';
+    if (errorMessage) {
+      return errorCode === 'DIVISION_BY_ZERO' ? 'Erro: Divisão por 0' : 'Erro';
     }
     if (isShowingCalculatedResult && calculatedValue !== null) {
       return calculatedValue;
     }
     if (activeInput === 'B') {
-      return operandB !== '' ? operandB : '0';
+      if (operandB !== '') return operandB;
+      // Mantém operandA no display enquanto o usuário ainda não começou a digitar operandB
+      return operandA !== '' ? operandA : '0';
     }
     return operandA !== '' ? operandA : '0';
   };
@@ -530,7 +631,7 @@ export default function App() {
                 {/* Display Screen Principal - Fundo cinza suave de alto contraste */}
                 <div className="bg-slate-100/90 border border-slate-200/80 rounded-2xl p-5 mb-5 shadow-inner">
                   
-                  {/* Linha Superior: Expressão formatada / em andamento */}
+                  {/* Linha Superior: Expressão formatada / em andamento com operandos interativos */}
                   <div className="min-h-6 flex items-center justify-end text-sm font-mono text-slate-500 space-x-1.5 overflow-x-auto">
                     {isShowingCalculatedResult && lastCompletedExpression ? (
                       <span className="text-slate-600 font-medium">
@@ -541,24 +642,51 @@ export default function App() {
                         {lastCompletedExpression}
                       </span>
                     ) : (
-                      <>
-                        {operandA !== '' && (
-                          <span className={activeInput === 'A' ? 'text-blue-700 font-bold underline' : 'text-slate-600'}>
+                      <div className="flex items-center space-x-1">
+                        {operandA !== '' ? (
+                          <button
+                            type="button"
+                            onClick={() => setActiveInput('A')}
+                            className={`px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
+                              activeInput === 'A'
+                                ? 'bg-blue-100 text-blue-800 font-bold underline decoration-blue-600 decoration-2'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                            }`}
+                            title="Clique para editar o 1º operando"
+                          >
                             {operandA}
-                          </span>
+                          </button>
+                        ) : (
+                          <span className="text-slate-400 text-xs font-sans">Aguardando 1º número...</span>
                         )}
+
                         {operation && (
-                          <span className="text-blue-600 font-bold px-1">{operation}</span>
-                        )}
-                        {operandB !== '' && (
-                          <span className={activeInput === 'B' ? 'text-blue-700 font-bold underline' : 'text-slate-600'}>
-                            {operandB}
+                          <span className="text-blue-600 font-bold px-1.5 py-0.5 rounded bg-blue-50 border border-blue-200">
+                            {operation}
                           </span>
                         )}
-                        {operandA === '' && (
-                          <span className="text-slate-400 text-xs font-sans">Aguardando entrada de números inteiros...</span>
+
+                        {operation && (
+                          operandB !== '' ? (
+                            <button
+                              type="button"
+                              onClick={() => setActiveInput('B')}
+                              className={`px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
+                                activeInput === 'B'
+                                  ? 'bg-blue-100 text-blue-800 font-bold underline decoration-blue-600 decoration-2'
+                                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                              }`}
+                              title="Clique para editar o 2º operando"
+                            >
+                              {operandB}
+                            </button>
+                          ) : (
+                            <span className="text-blue-600/70 text-xs font-mono animate-pulse">
+                              _
+                            </span>
+                          )
                         )}
-                      </>
+                      </div>
                     )}
                   </div>
 
@@ -578,8 +706,8 @@ export default function App() {
                   </div>
 
                   {/* Subtítulo / Indicador do Estado do Display */}
-                  <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-                    <span>
+                  <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-500 font-mono">
+                    <div>
                       {isCalculating ? (
                         <span className="text-blue-600 font-medium flex items-center gap-1">
                           <Cpu className="w-3.5 h-3.5 animate-spin" />
@@ -595,11 +723,24 @@ export default function App() {
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                           Resultado Calculado com Sucesso
                         </span>
+                      ) : operation === '%' ? (
+                        <span className="text-blue-700 font-medium">
+                          Porcentagem: ({operandA || 'A'} × {operandB || 'B'}) ÷ 100
+                        </span>
                       ) : (
-                        <span>Porta ativa: CalculatorUseCasePort</span>
+                        <span>
+                          Editando:{' '}
+                          <strong className="text-blue-700">
+                            {activeInput === 'A' ? '1º Operando' : '2º Operando'}
+                          </strong>
+                        </span>
                       )}
-                    </span>
-                    <span className="text-slate-400">Modo: Inteiro</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-slate-400">
+                      <span>Teclado: Ativo</span>
+                      <span>•</span>
+                      <span>Modo: Inteiro</span>
+                    </div>
                   </div>
                 </div>
 
@@ -634,7 +775,7 @@ export default function App() {
                   <button
                     onClick={handleResetCalculator}
                     className="p-3.5 rounded-xl font-mono font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 active:scale-95 transition-all text-sm flex items-center justify-center shadow-xs"
-                    title="Limpar tudo (Clear)"
+                    title="Limpar tudo (All Clear - Tecla Esc)"
                   >
                     AC
                   </button>
@@ -649,10 +790,10 @@ export default function App() {
                     onClick={() => handleSelectOperation('%')}
                     className={`p-3.5 rounded-xl font-mono font-bold text-lg active:scale-95 transition-all flex items-center justify-center ${
                       operation === '%'
-                        ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30'
+                        ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30 ring-2 ring-blue-400'
                         : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 shadow-xs'
                     }`}
-                    title="Porcentagem (%)"
+                    title="Porcentagem (%) - Tecla %"
                   >
                     %
                   </button>
@@ -660,10 +801,10 @@ export default function App() {
                     onClick={() => handleSelectOperation('/')}
                     className={`p-3.5 rounded-xl font-mono font-bold text-lg active:scale-95 transition-all flex items-center justify-center ${
                       operation === '/'
-                        ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30'
+                        ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30 ring-2 ring-blue-400'
                         : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 shadow-xs'
                     }`}
-                    title="Divisão (÷)"
+                    title="Divisão (÷) - Tecla /"
                   >
                     ÷
                   </button>
@@ -691,10 +832,10 @@ export default function App() {
                     onClick={() => handleSelectOperation('*')}
                     className={`p-3.5 rounded-xl font-mono font-bold text-lg active:scale-95 transition-all flex items-center justify-center ${
                       operation === '*'
-                        ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30'
+                        ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30 ring-2 ring-blue-400'
                         : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 shadow-xs'
                     }`}
-                    title="Multiplicação (×)"
+                    title="Multiplicação (×) - Tecla *"
                   >
                     ×
                   </button>
@@ -722,10 +863,10 @@ export default function App() {
                     onClick={() => handleSelectOperation('-')}
                     className={`p-3.5 rounded-xl font-mono font-bold text-lg active:scale-95 transition-all flex items-center justify-center ${
                       operation === '-'
-                        ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30'
+                        ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30 ring-2 ring-blue-400'
                         : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 shadow-xs'
                     }`}
-                    title="Subtração (−)"
+                    title="Subtração (−) - Tecla -"
                   >
                     −
                   </button>
@@ -753,15 +894,15 @@ export default function App() {
                     onClick={() => handleSelectOperation('+')}
                     className={`p-3.5 rounded-xl font-mono font-bold text-lg active:scale-95 transition-all flex items-center justify-center ${
                       operation === '+'
-                        ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30'
+                        ? 'bg-blue-600 text-white border border-blue-600 shadow-md shadow-blue-500/30 ring-2 ring-blue-400'
                         : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 shadow-xs'
                     }`}
-                    title="Adição (+)"
+                    title="Adição (+) - Tecla +"
                   >
                     +
                   </button>
 
-                  {/* Row 5: 0, ⌫, Editando, = */}
+                  {/* Row 5: 0, ⌫, CE, = */}
                   <button
                     onClick={() => handleDigit('0')}
                     className="p-3.5 rounded-xl font-mono font-semibold text-xl text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 shadow-xs active:scale-95 transition-all flex items-center justify-center"
@@ -771,26 +912,22 @@ export default function App() {
                   <button
                     onClick={handleBackspace}
                     className="p-3.5 rounded-xl font-mono font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 active:scale-95 transition-all text-sm flex items-center justify-center shadow-xs"
-                    title="Apagar dígito"
+                    title="Apagar último caractere (Backspace)"
                   >
                     <RotateCcw className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => {
-                      if (activeInput === 'A') setActiveInput('B');
-                      else setActiveInput('A');
-                    }}
-                    className="p-3.5 rounded-xl font-mono text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 shadow-xs active:scale-95 transition-all flex flex-col items-center justify-center"
-                    title="Alternar entre primeiro e segundo operando"
+                    onClick={handleClearEntry}
+                    className="p-3.5 rounded-xl font-mono font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 active:scale-95 transition-all text-xs flex items-center justify-center shadow-xs"
+                    title="Limpar entrada ativa (Clear Entry - Tecla Delete)"
                   >
-                    <span className="text-[10px] uppercase text-slate-500">Editando</span>
-                    <span className="font-bold text-blue-700">{activeInput}</span>
+                    CE
                   </button>
                   <button
                     onClick={handleExecuteCalculation}
                     disabled={isCalculating}
                     className="p-3.5 rounded-xl font-mono font-bold text-2xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/30 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50 border border-blue-700"
-                    title="Calcular resultado"
+                    title="Calcular resultado (Tecla Enter ou =)"
                   >
                     =
                   </button>
@@ -1012,13 +1149,14 @@ export default function App() {
                       test_adapters.py
                     </span>
                     <span className="text-xs font-mono text-emerald-600 flex items-center gap-1 font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> 5 testes OK
+                      <CheckCircle2 className="w-3.5 h-3.5" /> 7 testes OK
                     </span>
                   </div>
                   <h3 className="font-semibold text-sm text-slate-900 mb-2">Adaptadores de Entrada (JSON/CLI)</h3>
                   <ul className="text-xs text-slate-600 space-y-1.5">
                     <li>• Serialização e desserialização JSON</li>
-                    <li>• Suporte à operação de porcentagem (%)</li>
+                    <li>• Suporte à operação de porcentagem (%) e aliases ('percent', 'pct', 'porcentagem')</li>
+                    <li>• Porcentagem com valores negativos</li>
                     <li>• Códigos padronizados (DIVISION_BY_ZERO, INVALID_OPERATION)</li>
                     <li>• Proteção contra parâmetros ausentes ou não numéricos</li>
                     <li>• Integração ponta a ponta JSON string</li>
