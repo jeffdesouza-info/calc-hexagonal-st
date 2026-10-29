@@ -317,5 +317,18 @@ Durante a revisão do projeto após a inclusão da funcionalidade de cálculo de
 6. **Expansão da Suíte de Testes (33 testes)**: Adicionados 2 novos testes no `tests/test_adapters.py`:
    - `test_successful_percentage_with_text_aliases`: validação dos aliases `"porcentagem"`, `"percent"`, `"pct"`, `"porcento"`.
    - `test_percentage_with_negative_operands`: validação de porcentagens com operandos negativos via adaptador JSON.
-   - **Resultado**: 33 testes executados com 100% de sucesso.
+### 9.3 Correção Crítica do Zeramento Automático pós-Cálculo (Vite Watch & Estado de Sessão)
+- **Causa Raiz Diagnosticada**:
+  - A escrita no arquivo de persistência `history.json` (realizada pelo repositório do Python e pela rota da API para salvar o histórico de cálculos) era monitorada pelo *file watcher* do servidor de desenvolvimento Vite (`chokidar`).
+  - Como `history.json` não é um módulo JavaScript com suporte a Hot Module Replacement (HMR), o Vite enviava automaticamente uma mensagem WebSocket de recarga completa (`full-reload`) para o navegador.
+  - Ao recarregar a página por completo, a aplicação React era reinicializada do zero: reexecutava os efeitos de inicialização (`fetchHistory`, `fetchCodeFiles` e a suíte de testes unitários `runAutomatedTests` em segundo plano — o que gerava a percepção de lentidão na renderização) e restaurava o estado padrão inicial da calculadora, colocando `0` no visor.
+- **Ações Corretivas Aplicadas**:
+  1. **Isolamento do Watcher no `server.ts` e `vite.config.ts`**:
+     - Configurado `server.watch.ignored: ['**/history.json', '**/history.json/**', '**/*.py', '**/*.pyc', '**/__pycache__/**']` para que o servidor Vite ignore completamente modificações no banco de dados JSON e arquivos Python.
+  2. **Persistência de Sessão no Frontend (`sessionStorage`)**:
+     - O estado da calculadora (`operandA`, `operation`, `operandB`, `isShowingCalculatedResult`, `calculatedValue`, etc.) agora é sincronizado em `sessionStorage` (`hex_calc_state`), garantindo que, mesmo em caso de F5 manual pelo usuário, o visor e o resultado calculado permaneçam intactos.
+  3. **Guarda de Proteção contra Cliques Repetidos no `=`**:
+     - Implementada validação no `handleExecuteCalculation()` para ignorar acionamentos repetidos quando o visor já estiver exibindo o resultado calculado sem novo operador.
+- **Resultado Final**:
+  - O resultado calculado (ex: `200 % 15 = 30`) surge imediatamente e permanece fixo e estável no centro do display principal, sem qualquer recarga de tela, sem lentidão e sem ser zerado automaticamente.
 

@@ -51,18 +51,29 @@ interface CodeFile {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'calculator' | 'tests' | 'architecture' | 'code' | 'cli'>('calculator');
-  
+
+  // Recuperação de estado persistente da sessão para prevenir perdas de estado
+  const getInitialState = () => {
+    try {
+      const saved = sessionStorage.getItem('hex_calc_state');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return null;
+  };
+
+  const initial = getInitialState();
+
   // Calculator state
-  const [operandA, setOperandA] = useState<string>('');
-  const [operation, setOperation] = useState<'+' | '-' | '*' | '/' | '%' | null>(null);
-  const [operandB, setOperandB] = useState<string>('');
-  const [activeInput, setActiveInput] = useState<'A' | 'B'>('A');
+  const [operandA, setOperandA] = useState<string>(initial?.operandA ?? '');
+  const [operation, setOperation] = useState<'+' | '-' | '*' | '/' | '%' | null>(initial?.operation ?? null);
+  const [operandB, setOperandB] = useState<string>(initial?.operandB ?? '');
+  const [activeInput, setActiveInput] = useState<'A' | 'B'>(initial?.activeInput ?? 'A');
   const [isCalculating, setIsCalculating] = useState<boolean>(false);
   
-  // Novo estado de controle: indica que o display principal está exibindo o resultado calculado
-  const [isShowingCalculatedResult, setIsShowingCalculatedResult] = useState<boolean>(false);
-  const [lastCompletedExpression, setLastCompletedExpression] = useState<string | null>(null);
-  const [calculatedValue, setCalculatedValue] = useState<number | null>(null);
+  // Controle de exibição do resultado calculado no visor principal
+  const [isShowingCalculatedResult, setIsShowingCalculatedResult] = useState<boolean>(initial?.isShowingCalculatedResult ?? false);
+  const [lastCompletedExpression, setLastCompletedExpression] = useState<string | null>(initial?.lastCompletedExpression ?? null);
+  const [calculatedValue, setCalculatedValue] = useState<number | null>(initial?.calculatedValue ?? null);
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
@@ -86,6 +97,21 @@ export default function App() {
     fetchCodeFiles();
     runAutomatedTests();
   }, []);
+
+  // Sincroniza o estado da calculadora no sessionStorage para imunidade a qualquer recarga externa
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('hex_calc_state', JSON.stringify({
+        operandA,
+        operation,
+        operandB,
+        activeInput,
+        isShowingCalculatedResult,
+        lastCompletedExpression,
+        calculatedValue,
+      }));
+    } catch {}
+  }, [operandA, operation, operandB, activeInput, isShowingCalculatedResult, lastCompletedExpression, calculatedValue]);
 
   const fetchHistory = async () => {
     setIsLoadingHistory(true);
@@ -291,6 +317,9 @@ export default function App() {
     setCalculatedValue(null);
     setErrorMessage(null);
     setErrorCode(null);
+    try {
+      sessionStorage.removeItem('hex_calc_state');
+    } catch {}
   };
 
   const executeCalculationWith = async (
@@ -358,6 +387,10 @@ export default function App() {
   };
 
   const handleExecuteCalculation = async () => {
+    // Se o resultado já está visível no visor e nenhuma operação adicional foi iniciada, mantém o resultado
+    if (isShowingCalculatedResult && calculatedValue !== null && !operation) {
+      return;
+    }
     if (!operandA) {
       setErrorMessage('Por favor, informe o primeiro número inteiro.');
       return;
